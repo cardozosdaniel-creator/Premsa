@@ -124,6 +124,8 @@ Per executar les proves automàtiques:
 npm install playwright
 node tests/test-v5.mjs             # calendari, PDF, mapa, nivells
 node tests/test-import.mjs         # importació d'Excel (els dos modes)
+node tests/test-ux.mjs             # entrada enfocada, pendents, plantilles
+node tests/test-whatsnew.mjs       # novetats des de l'última visita
 # atenció: sobreescriuen config.js amb un mock — recupera'l després
 ```
 

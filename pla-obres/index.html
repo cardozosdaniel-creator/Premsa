@@ -260,22 +260,6 @@
     margin:0 0 8px 4px; font-size:10.5px; font-weight:700;
     letter-spacing:.09em; text-transform:uppercase; color:var(--ink-3);
   }
-  .sidebar .cta-import{
-    display:flex; align-items:center; gap:8px; justify-content:center;
-    padding:12px; border-radius:10px;
-    background:var(--accent); color:var(--accent-ink);
-    border:0; font-size:13px; font-weight:600; cursor:pointer;
-    box-shadow:var(--shadow-xs); font-family:inherit;
-    transition:transform .12s ease, box-shadow .12s ease;
-  }
-  .sidebar .cta-import:hover{ transform:translateY(-1px); box-shadow:var(--shadow); }
-  .sidebar .cta-import:disabled{ background:var(--surface-3); color:var(--ink-3); cursor:not-allowed; box-shadow:none; transform:none; }
-  .sidebar .cta-import .cta-icon{ font-size:16px; }
-  .cta-note{
-    font-size:11px; color:var(--ink-3); margin-top:4px; padding:0 4px;
-    text-align:center; line-height:1.4;
-  }
-
   .sidebar-search{
     position:relative;
   }
@@ -339,10 +323,16 @@
      format llistat vertical amb pastilla de comptador — el CSS ho fa sol per
      no haver de tocar el generador. */
   .filter-list .chip{
-    display:flex; align-items:center; gap:9px; width:100%;
+    display:flex; align-items:center; gap:8px; width:100%; min-width:0;
     background:none; border:0; padding:6px 8px; border-radius:6px;
     color:var(--ink-2); font-size:12.5px; font-weight:500;
     text-align:left; cursor:pointer; font-family:inherit;
+  }
+  /* El text és l'element elàstic: es retalla ell, i el punt de color i el
+     comptador es queden sempre visibles als extrems. */
+  .filter-list .chip > .chip-label{
+    flex:1 1 auto; min-width:0; overflow:hidden;
+    text-overflow:ellipsis; white-space:nowrap;
   }
   .filter-list .chip:hover{ background:var(--surface-2); color:var(--ink); }
   .filter-list .chip[aria-pressed="true"]{
@@ -356,7 +346,7 @@
     box-shadow:0 0 0 3px color-mix(in srgb, var(--dc,var(--accent)) 20%, transparent);
   }
   .filter-list .chip .n{
-    margin-left:auto; font-size:11px; color:var(--ink-3); font-weight:500;
+    flex:none; margin-left:auto; font-size:11px; color:var(--ink-3); font-weight:500;
     font-variant-numeric:tabular-nums;
     background:var(--surface-2); padding:1px 6px; border-radius:99px; min-width:22px; text-align:center;
   }
@@ -521,12 +511,9 @@
     background:var(--surface); border:1px solid var(--line);
     border-radius:7px; cursor:pointer; font-family:inherit;
     font-size:12.5px; color:var(--ink); text-align:left;
-    transition:border-color .12s ease, box-shadow .12s ease, transform .12s ease;
+    transition:border-color .12s ease, background .12s ease;
   }
-  .pill-item:hover{
-    border-color:var(--dc); box-shadow:0 2px 8px -2px color-mix(in srgb, var(--dc) 35%, transparent);
-    transform:translateY(-1px);
-  }
+  .pill-item:hover{ border-color:var(--dc); background:var(--surface-2); }
   .pill-item:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
   .pill-item.is-open{
     border-color:var(--dc); background:color-mix(in srgb, var(--dc) 7%, var(--surface));
@@ -547,14 +534,19 @@
   .pill-lvl.n3{ background:var(--n-3-bg); color:var(--n-3); }
   .pill-approx{ flex:none; font-size:11px; color:var(--ink-3); }
   .pill-item.done .pill-name{ color:var(--ink-3); }
+  /* Sempre visible, discret. Abans només apareixia en passar-hi el ratolí per
+     sobre: invisible en una tauleta i indescobrible per a qui no ho sabia. */
   .pill-add{
     display:inline-flex; align-items:center; gap:5px;
     padding:6px 11px; border:1px dashed var(--line-2); border-radius:7px;
     background:none; color:var(--ink-3); font-size:12px; cursor:pointer;
-    font-family:inherit; opacity:0; transition:opacity .12s ease, border-color .12s ease;
+    font-family:inherit; transition:border-color .12s ease, color .12s ease;
   }
-  .lane:hover .pill-add{ opacity:1; }
+  .pill-add::before{ content:"+"; font-weight:700; }
   .pill-add:hover{ border-color:var(--accent); color:var(--accent); }
+  /* Amb el mes desplegat el carril és una graella de fitxes: el botó hi ocupa
+     una cel·la sencera perquè no quedi penjat entre columnes. */
+  .pill-add.in-expanded{ justify-content:center; min-height:64px; border-radius:8px; }
 
   /* ── Fitxa completa (mes desplegat i vista de mapa) ── */
   .lane-items.expanded{ display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:10px; }
@@ -565,7 +557,7 @@
     font-family:inherit; display:flex; flex-direction:column; gap:7px;
     transition:border-color .12s ease, box-shadow .12s ease, transform .12s ease;
   }
-  .fc:hover{ border-color:var(--dc); box-shadow:var(--shadow); transform:translateY(-1px); }
+  .fc:hover{ border-color:var(--dc); background:var(--surface-2); }
   .fc.is-open{ box-shadow:0 0 0 2px color-mix(in srgb, var(--dc) 35%, transparent); }
   .fc-top{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
   .fc-dept{
@@ -590,9 +582,11 @@
     line-height:1.3; color:var(--ink); margin:0;
   }
   .fc-meta{
-    display:flex; flex-wrap:wrap; gap:3px 10px;
+    display:flex; flex-wrap:wrap; gap:3px 9px;
     font-size:11.5px; color:var(--ink-2); line-height:1.4;
   }
+  .fc-meta > span + span::before{ content:"·"; color:var(--ink-3); margin-right:9px; }
+  .fc-date{ font-variant-numeric:tabular-nums; }
   .fc-meta .fc-veg{ color:var(--ink-3); }
   .fc-imp{ font-family:"IBM Plex Mono",monospace; font-weight:600; color:var(--ink); }
   .fc-fita{
@@ -1081,6 +1075,36 @@
   .modal-preview .cnt.del b{ color:var(--danger); }
   .modal-preview .cnt.keep b{ color:var(--ink-2); }
 
+  /* Zona de risc del panell d'admin */
+  .danger-zone{
+    margin-top:18px; border:1px solid var(--danger-line); border-radius:8px;
+    background:var(--danger-bg); padding:13px 15px;
+  }
+  .danger-zone .dz-title{ font-size:12.5px; font-weight:700; color:var(--danger); margin-bottom:5px; }
+  .danger-zone p{ margin:0 0 10px; font-size:11.5px; color:var(--ink-2); line-height:1.5; }
+  .danger-zone label{ display:block; font-size:11.5px; color:var(--ink-2); margin-bottom:5px; }
+  .danger-zone input{
+    width:100%; padding:7px 10px; border:1px solid var(--danger-line);
+    border-radius:6px; background:var(--surface); color:var(--ink);
+    font:inherit; font-size:12.5px; margin-bottom:9px;
+  }
+  .danger-zone .btn{ color:var(--danger); border-color:var(--danger-line); }
+  .danger-zone .btn:disabled{ opacity:.45; cursor:not-allowed; }
+
+  /* Mapeig de columnes: quina columna del full és cada camp */
+  .colmap{ margin-top:14px; border-top:1px solid var(--line); padding-top:12px; }
+  .colmap-head{
+    font-size:10px; font-weight:700; letter-spacing:.07em; text-transform:uppercase;
+    color:var(--ink-3); margin-bottom:9px;
+  }
+  .colmap-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:7px 14px; }
+  .colmap-row{ display:flex; align-items:center; gap:8px; font-size:12px; color:var(--ink-2); }
+  .colmap-row > span{ flex:0 0 82px; }
+  .colmap-row select{
+    flex:1 1 auto; min-width:0; border:1px solid var(--line-2); border-radius:6px;
+    background:var(--surface); color:var(--ink); font:inherit; font-size:11.5px; padding:4px 6px;
+  }
+
   /* Selector de mode d'importació: afegir sense esborrar vs substituir-ho tot */
   .imp-mode{ display:flex; gap:8px; margin:14px 0 10px; }
   .imp-mode button{
@@ -1109,7 +1133,7 @@
   .dropzone:hover, .dropzone.drag{
     border-color:var(--accent); background:var(--accent-soft);
   }
-  .dropzone .dz-icon{ font-size:28px; display:block; margin-bottom:6px; opacity:.7; }
+  .dropzone .dz-icon{ display:block; margin-bottom:7px; color:var(--ink-3); }
   .dropzone .dz-hint{ font-size:13px; font-weight:600; color:var(--ink); }
   .dropzone .dz-sub{ font-size:11.5px; color:var(--ink-3); margin-top:3px; }
   .dropzone.drag .dz-hint{ color:var(--accent); }
@@ -1136,21 +1160,9 @@
   @keyframes spin{ to{transform:rotate(360deg)} }
   @media (prefers-reduced-motion: reduce){ #boot .spinner{ animation:none } }
 
-  /* editables */
-  .ed{ border-radius:5px; }
-  /* Els placeholders de guia només apareixen en mode edició: fora, un camp buit
-     és simplement text absent, no una invitació a escriure-hi. */
-  body.editing .ed.is-empty::before{ content:attr(data-ph); color:var(--ink-3); font-style:italic; font-weight:400; }
-  /* La caixa d'accions de comunicació sí que ensenya sempre l'exemple perquè
-     és el camp que l'usuari fa servir cada dia. */
-  .comm-box.ed.is-empty::before{ content:attr(data-ph); color:var(--ink-3); font-style:italic; font-weight:400; }
-  body.editing .ed:not(.comm-box){
-    outline:1px dashed var(--line-2); outline-offset:2px; cursor:text;
-  }
-  body.editing .ed:not(.comm-box):hover{ outline-color:var(--ink-3); }
-  .ed:focus{ outline:2px solid var(--accent); outline-offset:2px; background:var(--surface-2); }
-  /* Fora del mode edició, els camps de dades no es poden seleccionar per error. */
-  body:not(.editing) .ed:not(.comm-box){ cursor:default; }
+  /* La caixa d'accions de comunicació mostra sempre l'exemple: és el camp
+     que l'usuari fa servir cada dia. */
+  .comm-box.is-empty::before{ content:attr(data-ph); color:var(--ink-3); font-style:italic; font-weight:400; }
   .comm-box{
     min-height:36px; border:1px dashed var(--line-2); border-radius:7px;
     padding:6px 8px; font-size:12px; line-height:1.45; background:var(--surface-2);
@@ -1158,33 +1170,97 @@
   }
   .comm-box:focus{ outline:2px solid var(--accent); outline-offset:1px; border-style:solid; }
 
-  .editrow{ display:none; }
-  body.editing .editrow{
-    display:flex; flex-wrap:wrap; gap:6px; align-items:center;
-    border-top:1px dashed var(--line-2); padding-top:9px; margin-top:2px;
-  }
-  .editrow select{
-    border:1px solid var(--line-2); background:var(--surface-2); border-radius:6px;
-    padding:4px 6px; font-size:11px; max-width:100%;
-  }
-  .editrow label.tg{ display:inline-flex; align-items:center; gap:4px; font-size:11px; color:var(--ink-2); cursor:pointer; }
-  .del{
-    margin-left:auto; border:1px solid var(--line-2); background:var(--surface-2);
-    color:var(--danger); font-size:11px; font-weight:700; padding:4px 9px; border-radius:6px; cursor:pointer;
-  }
-  .del:hover{ background:var(--danger-bg); border-color:var(--danger-line); }
-  .addcard{
-    display:none; align-items:center; justify-content:center; min-height:64px;
-    border:1.5px dashed var(--line-2); border-radius:10px; background:none;
-    color:var(--ink-3); font-size:12.5px; font-weight:600; cursor:pointer;
-  }
-  body.editing .addcard{ display:flex; }
-  .addcard:hover{ border-color:var(--accent); color:var(--accent); }
-
   .empty-state{
-    font-size:13px; color:var(--ink-3); font-style:italic;
-    padding:30px 4px; text-align:center;
+    font-size:13px; color:var(--ink-2);
+    padding:34px 4px; text-align:center;
   }
+  .empty-state b{ color:var(--ink); }
+
+  /* ───────── banda de context i novetats ───────── */
+  /* Totes dues fan la mateixa feina: dir en una línia què passa, i donar
+     la sortida al costat. Sense caixes ni ombres: només una regla i text. */
+  .focus-bar, .whatsnew{
+    display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+    font-size:12.5px; color:var(--ink-2);
+    padding:9px 0; margin-bottom:2px;
+    border-bottom:1px solid var(--line);
+  }
+  .focus-bar b, .whatsnew b{ color:var(--ink); font-weight:650; }
+  .fb-clear, .wn-go{
+    border:none; background:none; padding:0; cursor:pointer;
+    font:inherit; color:var(--accent); font-weight:650;
+    text-decoration:underline; text-underline-offset:2px;
+  }
+  .fb-clear:hover, .wn-go:hover{ text-decoration-thickness:2px; }
+  .whatsnew{ border-bottom-color:var(--accent); }
+  .wn-close{
+    margin-left:auto; border:none; background:none; cursor:pointer;
+    color:var(--ink-3); font-size:17px; line-height:1; padding:0 2px;
+  }
+  .wn-close:hover{ color:var(--ink); }
+
+  /* ───────── selector Totes / Pendents ───────── */
+  .seg{ display:inline-flex; border:1px solid var(--line-2); border-radius:7px; overflow:hidden; }
+  .seg-btn{
+    border:none; background:var(--surface); cursor:pointer;
+    font:inherit; font-size:12px; font-weight:600; color:var(--ink-2);
+    padding:5px 12px;
+  }
+  .seg-btn + .seg-btn{ border-left:1px solid var(--line-2); }
+  .seg-btn:hover{ background:var(--surface-2); }
+  .seg-btn[aria-pressed="true"]{ background:var(--ink); color:var(--paper); }
+
+  /* ───────── marca de pendent a la píndola ───────── */
+  /* El punt ple vol dir «té accions escrites»; el buit, «encara no». És
+     l'única pregunta que es fa un Dircom cada matí. */
+  .pill-item.pending .pill-dot{
+    background:none; box-shadow:inset 0 0 0 1.5px var(--dc);
+  }
+
+  /* ───────── accions prescrites pel nivell ───────── */
+  .dw-tpl{ margin-top:12px; border-top:1px solid var(--line); padding-top:11px; }
+  .dw-tpl-head{
+    display:flex; align-items:baseline; justify-content:space-between;
+    font-size:10px; font-weight:700; letter-spacing:.07em; text-transform:uppercase;
+    color:var(--ink-3); margin-bottom:8px;
+  }
+  .dw-tpl-n{ font-family:"IBM Plex Mono",monospace; letter-spacing:0; }
+  .dw-tpl-hint{
+    margin-top:10px; font-size:11.5px; color:var(--ink-3); line-height:1.5;
+  }
+  .tpl-list{ display:flex; flex-direction:column; gap:2px; }
+  .tpl-item{
+    display:flex; align-items:flex-start; gap:8px; text-align:left;
+    border:none; background:none; cursor:pointer; font:inherit;
+    font-size:12px; color:var(--ink); line-height:1.45;
+    padding:5px 6px; border-radius:6px; width:100%;
+  }
+  .tpl-item:hover:not(:disabled){ background:var(--surface-2); }
+  .tpl-box{
+    flex:0 0 15px; height:15px; margin-top:1px;
+    border:1px solid var(--line-2); border-radius:4px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:10px; color:var(--ink-3);
+  }
+  .tpl-item.on{ color:var(--ink-3); cursor:default; }
+  .tpl-item.on .tpl-box{ border-color:var(--ok); color:var(--ok); }
+  .tpl-all{
+    margin-top:8px; border:1px solid var(--line-2); background:var(--surface);
+    border-radius:6px; padding:5px 10px; cursor:pointer;
+    font:inherit; font-size:11.5px; font-weight:600; color:var(--ink-2);
+  }
+  .tpl-all:hover{ border-color:var(--ink-3); color:var(--ink); }
+  .dw-suggest{
+    margin-top:9px; font-size:11.5px; color:var(--ink-2); line-height:1.5;
+  }
+  .dw-suggest-go{
+    border:none; background:none; padding:0; cursor:pointer;
+    font:inherit; color:var(--accent); font-weight:650;
+    text-decoration:underline; text-underline-offset:2px;
+  }
+
+  /* ───────── ajuda del departament al modal d'entrada ───────── */
+  .signin-hint{ font-size:11.5px; color:var(--ink-3); margin:6px 0 0; line-height:1.5; }
 
   /* ───────── toast ───────── */
   #toast{
@@ -1254,12 +1330,13 @@
     display:block; font-size:10.5px; font-weight:700; letter-spacing:.08em;
     text-transform:uppercase; color:var(--ink-3); margin:12px 0 6px;
   }
-  .signin-card input{
+  .signin-card input, .signin-card select{
     width:100%; padding:10px 13px; border:1px solid var(--line-2);
     background:var(--surface-2); border-radius:8px; font-size:14px;
     color:var(--ink); font-family:inherit;
     transition:border-color .1s ease, background .1s ease;
   }
+  .signin-card select:focus{ outline:2px solid var(--accent); outline-offset:1px; }
   .signin-card input:focus{ outline:2px solid var(--accent); outline-offset:1px; border-color:transparent; background:var(--surface); }
   .signin-card .signin-actions{ display:flex; gap:8px; align-items:center; margin-top:18px; }
   .signin-card .signin-actions .btn.primary{ padding:10px 20px; font-size:13px; }
@@ -1573,11 +1650,6 @@
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-inner">
 
-      <button class="cta-import" id="btn-import" data-act="excel-paste">
-        <span class="cta-icon">📥</span><span>Importar Excel</span>
-      </button>
-      <div class="cta-note">Enganxa cel·les d'Excel/CSV o arrossega el fitxer.</div>
-
       <div class="sidebar-search">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
         <input id="search" type="search" placeholder="Cerca obra, lloc, fita…" autocomplete="off">
@@ -1651,28 +1723,17 @@
       <span class="sep"></span>
       <span class="sync-state" id="sync-state" title="Estat de la connexió amb el servidor"><span class="sync-dot"></span><span id="sync-label">Connectant…</span></span>
       <div id="presence" class="no-print empty"></div>
-      <button class="btn" id="btn-edit" aria-pressed="false">✎ Editar</button>
-      <details class="menu"><summary class="btn">⤓ Exporta ▾</summary>
+      <button class="btn primary" id="btn-new" data-act="new-row">Nova actuació</button>
+      <button class="btn" data-act="print" title="Obre el diàleg d'impressió amb el dossier preparat">Dossier PDF</button>
+      <details class="menu"><summary class="btn">Dades</summary>
         <div class="menu-pop">
-          <div class="mi-head">Exportació</div>
-          <button class="mi" data-act="print">Imprimeix / Desa en PDF<small>Obre el diàleg del navegador. Tria «Desa com a PDF».</small></button>
-          <button class="mi" data-act="pdf">Obre l'informe en pestanya nova<small>Genera l'informe autònom i l'obre.</small></button>
-          <button class="mi" data-act="download-pdf">Descarrega l'informe (HTML)<small>Fitxer autònom amb el pla.</small></button>
-          <div class="mi-sep"></div>
-          <button class="mi" data-act="pdf-help">Com desar-ho en PDF?<small>Instruccions pas a pas.</small></button>
-        </div>
-      </details>
-      <details class="menu"><summary class="btn">Dades ▾</summary>
-        <div class="menu-pop">
-          <div class="mi-head">Actualització des d'Excel</div>
-          <button class="mi" data-act="excel-paste">Enganxa dades d'Excel<small>Substitueix la llista preservant comentaris.</small></button>
+          <button class="mi" data-act="excel-paste">Importa des d'Excel<small>Afegeix o actualitza en bloc des d'un full de càlcul.</small></button>
           <div class="mi-sep"></div>
           <div class="mi-head">Còpia de seguretat</div>
-          <button class="mi" data-act="backup">Desa una còpia (JSON)</button>
-          <button class="mi" data-act="restore">Restaura una còpia (JSON)</button>
+          <button class="mi" data-act="backup">Desa una còpia<small>Fitxer JSON amb les obres i l'historial.</small></button>
+          <button class="mi" data-act="restore">Restaura una còpia</button>
           <div class="mi-sep"></div>
-          <button class="mi" data-act="admin-panel" id="admin-menu-btn" style="display:none">⚙ Panell d'admin<small>Contrasenya, gestió d'accés.</small></button>
-          <button class="mi danger" data-act="reset">Torna a les dades originals</button>
+          <button class="mi" data-act="admin-panel" id="admin-menu-btn" style="display:none">Panell d'admin<small>Contrasenya i gestió d'accés.</small></button>
         </div>
       </details>
       <button type="button" class="user-chip" id="user-chip" data-act="switch-user" title="Canvia d'usuari">
@@ -1698,6 +1759,9 @@
         </div>
       </div>
 
+      <div id="whatsnew" class="no-print"></div>
+      <div id="focus-bar" class="no-print"></div>
+
       <div id="summary"></div>
 
       <!-- Línia temporal: píndoles cronològiques amb els períodes disponibles.
@@ -1720,6 +1784,10 @@
           Mapa territorial
         </button>
         <span style="flex:1 1 auto"></span>
+        <div class="seg" role="group" aria-label="Què vols veure">
+          <button type="button" class="seg-btn" data-act="scope-all" aria-pressed="true">Totes</button>
+          <button type="button" class="seg-btn" data-act="scope-pending" aria-pressed="false">Pendents</button>
+        </div>
         <button class="btn sm" id="btn-expand-all" style="margin:2px 3px 2px 8px">Desplega-ho tot</button>
       </div>
 
@@ -2055,6 +2123,53 @@ var STATUS = {
 };
 var STATUS_ORDER = ["todo","doing","done"];
 
+// Accions que prescriu cada nivell del model de proximitat. Són acumulatives:
+// el Nivell 2 fa tot el del Nivell 1 i hi afegeix el seu, i el 3 sobre el 2.
+// Serveixen de punt de partida editable, no de camisa de força: l'usuari les
+// esborra o n'afegeix segons l'obra.
+var NIVELL_ACCIONS = {
+  "1": [
+    "Cartell informatiu a peu d'obra",
+    "Fitxa de l'actuació al web del departament",
+    "Avís als serveis municipals implicats"
+  ],
+  "2": [
+    "Bustiada als habitatges afectats",
+    "Cartelleria als portals i als comerços",
+    "Reunió informativa amb el veïnat",
+    "Telèfon i correu de contacte publicats",
+    "Avís amb 15 dies d'antelació abans de començar"
+  ],
+  "3": [
+    "Oficina física d'atenció a la ciutadania",
+    "Informadors de carrer durant l'obra",
+    "Butlletí periòdic d'avançament",
+    "Web propi de l'actuació",
+    "Sessions sectorials amb comerç, escoles i entitats",
+    "Acte públic de retorn en finalitzar"
+  ]
+};
+
+// Llista acumulada per a un nivell.
+function accionsPerNivell(n){
+  var out = [];
+  ["1","2","3"].forEach(function(k){
+    if (k <= String(n)) out = out.concat(NIVELL_ACCIONS[k] || []);
+  });
+  return out;
+}
+
+// El protocol diu que el nivell el marca el criteri més exigent entre inversió
+// i impacte. L'impacte no el sabem; la inversió sí, així que en proposem un i
+// deixem que la persona decideixi.
+function nivellSuggerit(row){
+  var eur = parseEuros(row.imp);      // en euros, no en milions
+  if (eur === null) return "";
+  if (eur >= 20e6) return "3";
+  if (eur >= 5e6)  return "2";
+  return "1";
+}
+
 // Nivells del model de comunicació de proximitat (extret del protocol intern).
 // El nivell el determina el criteri més exigent entre inversió i impacte.
 var NIVELLS = {
@@ -2116,7 +2231,7 @@ function writeLocalPrefs(obj){
 // funciona per intercanvi del JSON entre companys, amb un historial que registra
 // qui ha fet cada canvi i quan. En importar un JSON, els historials es fusionen.
 var state = { rows:[], updatedAt:null, currentUser:null, history:[] };
-var view = { depts:[], statuses:[], nivells:[], encarregats:[], vegueries:[], buckets:[], months:[], query:"", hidePast:false, editing:false, histExpanded:false, mode:"calendari", openId:null, expandedMonths:[] };
+var view = { depts:[], statuses:[], nivells:[], encarregats:[], vegueries:[], buckets:[], months:[], query:"", hidePast:false, pending:false, histExpanded:false, mode:"calendari", openId:null, expandedMonths:[] };
 var saveTimer = null;
 var HISTORY_CAP = 500;              // no ens quedem amb més entrades: memòria acotada
 var HISTORY_COLLAPSED = 6;          // visibles quan el panell no està expandit
@@ -2166,11 +2281,43 @@ function normalizeRow(r){
 }
 function str(v){ return typeof v === "string" ? v : (v == null ? "" : String(v)); }
 
+// Què desem al navegador de cada persona: qui és, de quin departament, i com
+// li agrada veure el tauler. Així no ha de tornar a filtrar cada matí.
+function currentPrefs(){
+  return {
+    currentUser: state.currentUser,
+    currentEmail: state.currentEmail,
+    myDept: state.myDept || null,
+    depts: view.depts,
+    statuses: view.statuses,
+    pending: view.pending,
+    hidePast: view.hidePast,
+    seenAt: state.seenAt || null
+  };
+}
+
+// La primera vegada donem una vista enfocada: el seu departament, només el
+// que està per planificar i sense mesos passats. A partir d'aquí manen les
+// seves preferències, encara que sigui per veure-ho tot.
+function applyFirstRunView(){
+  view.depts = state.myDept ? [state.myDept] : [];
+  view.pending = true;
+  view.hidePast = true;
+}
+
 function loadLocalPrefs(){
   var prefs = readLocalPrefs();
   state.currentUser = prefs.currentUser || null;
   state.currentEmail = prefs.currentEmail || null;
-  view.editing = !!prefs.editing;
+  state.myDept = prefs.myDept || null;
+  state.lastSeenAt = prefs.seenAt || null;   // per a «novetats des de l'última visita»
+  state.knownUser = !!prefs.currentUser;
+  if (state.knownUser){
+    if (Array.isArray(prefs.depts)) view.depts = prefs.depts;
+    if (Array.isArray(prefs.statuses)) view.statuses = prefs.statuses;
+    view.pending = !!prefs.pending;
+    view.hidePast = !!prefs.hidePast;
+  }
   // La preferència de sidebar plegable es carrega i s'aplica després que el
   // DOM estigui muntat (vegeu boot() → applySidebarState).
 }
@@ -2226,7 +2373,7 @@ function save(now){
   state.updatedAt = new Date().toISOString();
   clearTimeout(saveTimer);
   var doIt = function(){
-    writeLocalPrefs({ currentUser: state.currentUser, editing: view.editing });
+    writeLocalPrefs(currentPrefs());
     renderMeta();
   };
   if (now) doIt(); else saveTimer = setTimeout(doIt, 350);
@@ -2379,6 +2526,7 @@ function visibleRows(){
   var q = view.query.trim().toLowerCase();
   return state.rows.filter(function(r){
     if (view.depts.length && view.depts.indexOf(r.dept) < 0) return false;
+    if (view.pending && isPlanned(r)) return false;
     if (view.statuses.length && view.statuses.indexOf(r.status) < 0) return false;
     if (view.nivells.length && view.nivells.indexOf(r.nivell) < 0) return false;
     if (view.encarregats.length && view.encarregats.indexOf(r.encarregat) < 0) return false;
@@ -2414,7 +2562,7 @@ function filtersActive(){
             view.encarregats.length || view.vegueries.length ||
             (view.buckets && view.buckets.length) ||
             (view.months && view.months.length) ||
-            view.query.trim() || view.hidePast);
+            view.query.trim() || view.hidePast || view.pending);
 }
 
 /* ══════════════ 7. RENDER ══════════════ */
@@ -2428,19 +2576,48 @@ function pinIcon(){
 // el mode edició està actiu; sense ell són text pla, per no tocar-los sense voler.
 // Les accions de comunicació (comm-box) són sempre editables — és el que canvia
 // cada dia i no té sentit obligar a entrar en mode edició per anotar-hi res.
-function edField(row, field, cls, ph, tag){
-  tag = tag || "div";
-  var v = row[field] || "";
-  var ce = view.editing ? ' contenteditable="true"' : "";
-  return "<" + tag + ' class="' + cls + ' ed' + (v ? "" : " is-empty") + '"' + ce +
-    ' spellcheck="false" role="textbox" aria-label="' + esc(ph) + '"' +
-    ' data-id="' + esc(row.id) + '" data-field="' + field + '" data-ph="' + esc(ph) + '">' +
-    esc(v) + "</" + tag + ">";
-}
-
 // ═════════ PANELL LATERAL DE DETALL (DRAWER) ═════════
 // Tota l'edició viu aquí. El taulell queda net; el drawer és on el Dircom
 // treballa una fita concreta sense perdre de vista el calendari.
+// Una acció ja hi és si el text la conté (comparació laxa: la persona pot
+// haver-la retocada, però no la volem duplicar en un clic despistat).
+function commsHasAction(comms, action){
+  var hay = String(comms || "").toLowerCase();
+  return hay.indexOf(action.toLowerCase()) >= 0;
+}
+
+// La caixa d'accions deixa de ser un full en blanc: sota hi ha el que el
+// protocol prescriu per aquest nivell, i s'hi afegeix amb un clic. Segueix
+// sent text lliure — no hi ha estructura amagada — perquè el PDF, l'Excel i
+// les còpies de seguretat continuïn funcionant igual.
+function checklistHTML(row){
+  if (!row.nivell) {
+    return '<div class="dw-tpl-hint">Tria un nivell de comunicació i aquí sortiran les accions que li corresponen.</div>';
+  }
+  var actions = accionsPerNivell(row.nivell);
+  if (!actions.length) return "";
+  var done = 0;
+  var items = actions.map(function(a, i){
+    var on = commsHasAction(row.comms, a);
+    if (on) done++;
+    return '<button type="button" class="tpl-item' + (on ? " on" : "") + '"' +
+      ' data-act="tpl-add" data-i="' + i + '"' + (on ? ' disabled' : '') +
+      ' title="' + (on ? "Ja consta al pla" : "Afegeix-ho al pla") + '">' +
+      '<span class="tpl-box" aria-hidden="true">' + (on ? "✓" : "+") + '</span>' +
+      '<span>' + esc(a) + '</span></button>';
+  }).join("");
+  return '<div class="dw-tpl">' +
+    '<div class="dw-tpl-head">' +
+      "<span>Accions del Nivell " + esc(row.nivell) + "</span>" +
+      '<span class="dw-tpl-n">' + done + "/" + actions.length + "</span>" +
+    '</div>' +
+    '<div class="tpl-list">' + items + '</div>' +
+    (done < actions.length
+      ? '<button type="button" class="tpl-all" data-act="tpl-add-all">Afegeix-les totes</button>'
+      : '') +
+  '</div>';
+}
+
 function renderDrawer(){
   var host = $("drawer");
   var scrim = $("drawer-scrim");
@@ -2475,6 +2652,8 @@ function renderDrawer(){
     KIND_ORDER.map(function(x){
       return '<option value="' + x + '"' + (row.kind === x ? " selected" : "") + ">" + KINDS[x] + "</option>";
     }).join("");
+
+  var suggerit = nivellSuggerit(row);
 
   var nivellChips = NIVELL_ORDER.map(function(n){
     var on = row.nivell === n;
@@ -2516,15 +2695,20 @@ function renderDrawer(){
 
       '<div class="dw-section">' +
         '<span class="dw-label">Accions de comunicació</span>' +
-        '<textarea class="dw-field" data-dwfield="comms" rows="4" ' +
+        '<textarea class="dw-field" data-dwfield="comms" rows="5" ' +
           'placeholder="Nota de premsa, roda de premsa, visita del conseller, bustiada, xarxes…">' +
           esc(row.comms || "") + '</textarea>' +
+        checklistHTML(row) +
         '<div style="margin-top:12px"><span class="dw-label">Estat</span><div class="dw-chips">' + statusChips + '</div></div>' +
       '</div>' +
 
       '<div class="dw-section">' +
         '<span class="dw-label">Nivell de comunicació de proximitat</span>' +
         '<div class="dw-chips">' + nivellChips + '</div>' +
+        (suggerit && suggerit !== row.nivell
+          ? '<div class="dw-suggest">Per inversió, li correspondria el <b>Nivell ' + suggerit + '</b>. ' +
+            '<button type="button" class="dw-suggest-go" data-act="dw-nivell" data-key="' + suggerit + '">Aplica-ho</button></div>'
+          : '') +
         '<div style="margin-top:12px"><span class="dw-label">Qui se n\'encarrega</span>' +
           '<div class="dw-chips">' + encChips + '</div></div>' +
       '</div>' +
@@ -2647,18 +2831,72 @@ function monthSequence(map){
 
 // Píndola compacta: punt de departament + nom + marca de nivell. Res més.
 // Tot el detall s'obre al panell lateral (drawer).
+// Una actuació està planificada quan té accions de comunicació escrites. És
+// l'única pregunta que un Dircom es fa cada matí, així que ha de veure's a la
+// píndola sense haver d'obrir la fitxa.
+function isPlanned(row){ return !!(row.comms && row.comms.trim()); }
+
 function pillHTML(row){
   var open = view.openId === row.id;
+  var planned = isPlanned(row);
   return '<button type="button" class="pill-item' + (open ? " is-open" : "") +
-    (row.status === "done" ? " done" : "") + '"' +
+    (row.status === "done" ? " done" : "") + (planned ? "" : " pending") + '"' +
     ' style="--dc:var(--c-' + row.dept + ')"' +
     ' data-act="open-row" data-id="' + esc(row.id) + '"' +
-    ' title="' + esc(deptShort(row.dept) + " · " + (row.fita || "")) + '">' +
+    ' title="' + esc(deptShort(row.dept) + " · " + (row.fita || "") +
+      " · " + (planned ? "amb accions de comunicació" : "sense accions de comunicació")) + '">' +
     '<span class="pill-dot"></span>' +
     '<span class="pill-name">' + esc(row.obra || "(sense títol)") + '</span>' +
     (row._approx ? '<span class="pill-approx" title="Data aproximada">~</span>' : '') +
     (row.nivell ? '<span class="pill-lvl n' + row.nivell + '">N' + row.nivell + '</span>' : '') +
   '</button>';
+}
+
+// Banda que diu, en una línia, què s'està mirant i com sortir-ne. Sense això
+// un filtre actiu es converteix en «l'aplicació ha perdut les meves obres».
+function renderFocusBar(rows){
+  var host = $("focus-bar");
+  if (!host) return;
+  var bits = [];
+  if (view.depts.length === 1) bits.push(esc(DEPTS[view.depts[0]]));
+  else if (view.depts.length > 1) bits.push(view.depts.length + " departaments");
+  if (view.pending) bits.push("només les pendents");
+  if (view.hidePast) bits.push("sense els mesos passats");
+  if (!bits.length){ host.innerHTML = ""; host.className = "no-print"; return; }
+  host.className = "focus-bar no-print";
+  host.innerHTML =
+    '<span class="fb-text">Estàs veient <b>' + bits.join("</b> · <b>") + '</b>' +
+      ' — ' + rows.length + (rows.length === 1 ? " actuació" : " actuacions") + '</span>' +
+    '<button type="button" class="fb-clear" data-act="clearfilters">Veure-ho tot</button>';
+}
+
+function dismissWhatsNew(){
+  state.lastSeenAt = Date.now();
+  renderWhatsNew();
+}
+
+// Resum del que han fet els altres des de l'última vegada que vam entrar.
+function renderWhatsNew(){
+  var host = $("whatsnew");
+  if (!host) return;
+  var since = state.lastSeenAt;
+  if (!since || !state.history.length){ host.innerHTML = ""; host.className = "no-print"; return; }
+  var mine = state.currentUser;
+  var recent = state.history.filter(function(h){
+    return h.ts > since && h.user && h.user !== mine;
+  });
+  if (!recent.length){ host.innerHTML = ""; host.className = "no-print"; return; }
+  var people = [];
+  recent.forEach(function(h){ if (people.indexOf(h.user) < 0) people.push(h.user); });
+  var who = people.length === 1 ? esc(people[0])
+    : people.length === 2 ? esc(people[0]) + " i " + esc(people[1])
+    : esc(people[0]) + " i " + (people.length - 1) + " persones més";
+  host.className = "whatsnew no-print";
+  host.innerHTML =
+    '<span class="wn-text"><b>' + recent.length + (recent.length === 1 ? " canvi" : " canvis") + '</b> ' +
+      'des de la teva última visita, de ' + who + '.</span>' +
+    '<button type="button" class="wn-go" data-act="open-history">Veure l\'historial</button>' +
+    '<button type="button" class="wn-close" data-act="dismiss-new" aria-label="Descarta">×</button>';
 }
 
 // Fitxa completa: tota la informació rellevant visible sense obrir el drawer.
@@ -2677,9 +2915,9 @@ function fullCardHTML(row){
     '</div>' +
     '<h4 class="fc-title">' + esc(row.obra || "(sense títol)") + '</h4>' +
     '<div class="fc-meta">' +
-      (row.loc && row.loc !== "—" ? '<span>📍 ' + esc(row.loc) +
+      (row.loc && row.loc !== "—" ? '<span>' + esc(row.loc) +
         (row.vegueria ? ' <span class="fc-veg">· ' + esc(VEGUERIES[row.vegueria].label) + '</span>' : '') + '</span>' : '') +
-      (row.data ? '<span>🗓 ' + esc(row.data) + (row._approx ? ' ~' : '') + '</span>' : '') +
+      (row.data ? '<span class="fc-date">' + esc(row.data) + (row._approx ? ' ~' : '') + '</span>' : '') +
       (eur !== null ? '<span class="fc-imp">' + esc(row.imp) + '</span>' : '') +
     '</div>' +
     '<div class="fc-fita">' +
@@ -2726,17 +2964,26 @@ function render(){
       '</button>' +
       '<div class="lane-items' + (isExp ? " expanded" : "") + '">' +
         (list.length
-          ? list.map(isExp ? fullCardHTML : pillHTML).join("") +
-            (isExp ? '' : '<button type="button" class="pill-add" data-act="add-month" data-month="' + esc(key) + '">+ Afegeix</button>')
-          : '<span class="lane-empty-note">Cap fita aquest mes</span>' +
-            '<button type="button" class="pill-add" data-act="add-month" data-month="' + esc(key) + '">+ Afegeix</button>') +
+          ? list.map(isExp ? fullCardHTML : pillHTML).join("")
+          : '<span class="lane-empty-note">Cap fita aquest mes</span>') +
+        // El botó d'afegir hi és sempre: abans desapareixia en desplegar el mes,
+        // just quan l'usuari hi està treballant.
+        '<button type="button" class="pill-add' + (isExp ? " in-expanded" : "") +
+          '" data-act="add-month" data-month="' + esc(key) + '"' +
+          ' title="Afegeix una actuació a ' + esc(monthLabel(key)) + '">Afegeix</button>' +
       '</div>' +
     '</div>';
   });
 
   if (!seq.length){
-    html = '<div class="empty-state">Cap actuació coincideix amb els filtres actuals.' +
-      (filtersActive() ? ' <button class="btn sm" data-act="clearfilters" style="margin-left:8px">Neteja els filtres</button>' : "") +
+    // Si el que passa és que no queda res pendent, no és un buit: és una bona
+    // notícia. Val la pena dir-ho amb aquestes paraules.
+    var onlyPending = view.pending;
+    html = '<div class="empty-state">' +
+      (onlyPending
+        ? '<b>Tot planificat.</b> No queda cap actuació sense accions de comunicació en aquesta selecció.'
+        : "Cap actuació coincideix amb els filtres actuals.") +
+      (filtersActive() ? ' <button class="btn sm" data-act="clearfilters" style="margin-left:8px">Veure-ho tot</button>' : "") +
       "</div>";
   }
 
@@ -2761,6 +3008,10 @@ function render(){
   document.querySelectorAll(".view-tab").forEach(function(b){
     b.setAttribute("aria-pressed", String(b.dataset.view === view.mode));
   });
+  var scopeAll = document.querySelector('[data-act="scope-all"]');
+  var scopePend = document.querySelector('[data-act="scope-pending"]');
+  if (scopeAll) scopeAll.setAttribute("aria-pressed", String(!view.pending));
+  if (scopePend) scopePend.setAttribute("aria-pressed", String(view.pending));
   var expBtn = $("btn-expand-all");
   if (expBtn){
     var g2 = groupByMonth(rows);
@@ -2772,7 +3023,11 @@ function render(){
 
   renderSummary(rows);
   renderChips();
+  renderFocusBar(rows);
   renderPrintView(rows, groupByBucket(rows));
+  // Desem la vista al navegador: qui torna demà es troba el tauler com el va
+  // deixar, no com el vam decidir nosaltres.
+  writeLocalPrefs(currentPrefs());
 
   // Els comptadors del timeline ignoren el filtre de mes, perquè si l'usuari
   // en selecciona un, els altres no li desapareguin del scrubber.
@@ -2819,8 +3074,9 @@ function renderChips(){
     var on = view.depts.indexOf(d) >= 0;
     return '<button type="button" class="chip" style="--dc:var(--c-' + d + ')" aria-pressed="' + on + '"' +
       ' data-act="dept" data-key="' + d + '" title="' + esc(DEPTS[d]) + '"><span class="dot"></span>' +
-      (DEPT_EMOJIS[d] ? '<span class="chip-emoji" aria-hidden="true">' + DEPT_EMOJIS[d] + '</span> ' : '') +
-      esc(DEPTS[d]) + ' <span class="n">' + (counts[d] || 0) + "</span></button>";
+      (DEPT_EMOJIS[d] ? '<span class="chip-emoji" aria-hidden="true">' + DEPT_EMOJIS[d] + '</span>' : '') +
+      '<span class="chip-label">' + esc(DEPTS[d]) + '</span>' +
+      '<span class="n">' + (counts[d] || 0) + "</span></button>";
   }).join("");
 
   var scount = {};
@@ -2828,8 +3084,9 @@ function renderChips(){
   $("statuschips").innerHTML = STATUS_ORDER.map(function(s){
     var on = view.statuses.indexOf(s) >= 0;
     return '<button type="button" class="chip" aria-pressed="' + on + '"' +
-      ' data-act="status-filter" data-key="' + s + '">' + STATUS[s].label +
-      ' <span class="n">' + (scount[s] || 0) + "</span></button>";
+      ' data-act="status-filter" data-key="' + s + '">' +
+      '<span class="chip-label">' + esc(STATUS[s].label) + '</span>' +
+      '<span class="n">' + (scount[s] || 0) + "</span></button>";
   }).join("");
 
   var ncount = {};
@@ -2839,8 +3096,9 @@ function renderChips(){
     var lbl = k ? "Nivell " + k : "Sense assignar";
     return '<button type="button" class="chip" style="--dc:var(' + NIVELLS[k].var + ')"' +
       ' aria-pressed="' + on + '" data-act="nivell-filter" data-key="' + k + '"' +
-      ' title="' + esc(NIVELLS[k].label) + '"><span class="dot"></span>' + lbl +
-      ' <span class="n">' + (ncount[k] || 0) + "</span></button>";
+      ' title="' + esc(NIVELLS[k].label) + '"><span class="dot"></span>' +
+      '<span class="chip-label">' + lbl + '</span>' +
+      '<span class="n">' + (ncount[k] || 0) + "</span></button>";
   }).join("");
 
   var ecount = {};
@@ -2849,8 +3107,9 @@ function renderChips(){
     var on = view.encarregats.indexOf(k) >= 0;
     return '<button type="button" class="chip" style="--dc:var(' + ENCARREGATS[k].var + ')"' +
       ' aria-pressed="' + on + '" data-act="enc-filter" data-key="' + k + '">' +
-      '<span class="dot"></span>' + esc(ENCARREGATS[k].label) +
-      ' <span class="n">' + (ecount[k] || 0) + "</span></button>";
+      '<span class="dot"></span>' +
+      '<span class="chip-label">' + esc(ENCARREGATS[k].label) + '</span>' +
+      '<span class="n">' + (ecount[k] || 0) + "</span></button>";
   }).join("");
 
   var vcount = {};
@@ -2859,8 +3118,10 @@ function renderChips(){
     var on = view.vegueries.indexOf(k) >= 0;
     var lbl = k ? VEGUERIES[k].label : "Sense assignar";
     return '<button type="button" class="chip"' +
-      ' aria-pressed="' + on + '" data-act="veg-filter" data-key="' + k + '">' + esc(lbl) +
-      ' <span class="n">' + (vcount[k] || 0) + "</span></button>";
+      ' aria-pressed="' + on + '" data-act="veg-filter" data-key="' + k + '"' +
+      ' title="' + esc(lbl) + '">' +
+      '<span class="chip-label">' + esc(lbl) + '</span>' +
+      '<span class="n">' + (vcount[k] || 0) + "</span></button>";
   }).join("");
 
   $("legend").innerHTML = KIND_ORDER.map(function(k){
@@ -2874,8 +3135,6 @@ function renderChips(){
   $("btn-clear").disabled = !filtersActive();
   $("btn-past").classList.toggle("on", view.hidePast);
   $("btn-past").textContent = view.hidePast ? "Mostra tot el calendari" : "Amaga el que ja ha passat";
-  $("btn-edit").classList.toggle("on", view.editing);
-  $("btn-edit").setAttribute("aria-pressed", String(view.editing));
 }
 
 function renderUserChip(){
@@ -2921,6 +3180,14 @@ function showSignin(force){
         '<label for="signin-input">Nom i cognom</label>' +
         '<input type="text" id="signin-input" placeholder="Anna Sala Puig" value="' + esc(state.currentUser || "") + '" autocomplete="name">' +
         '<div id="signin-err" style="display:none; color:var(--danger); font-size:12px; margin:6px 0 0">Cal introduir com a mínim un nom i un cognom.</div>' +
+        '<label for="signin-dept">El teu departament</label>' +
+        '<select id="signin-dept">' +
+          '<option value="">— Els vull veure tots —</option>' +
+          DEPT_KEYS.map(function(d){
+            return '<option value="' + d + '"' + (d === state.myDept ? " selected" : "") + ">" + esc(DEPTS[d]) + "</option>";
+          }).join("") +
+        '</select>' +
+        '<div class="signin-hint">Entraràs veient les teves actuacions. Sempre pots treure el filtre.</div>' +
         '<label for="signin-email">Correu institucional <span style="font-weight:400; color:var(--ink-3); text-transform:none; letter-spacing:0">(opcional — només per identificar l\'admin)</span></label>' +
         '<input type="text" id="signin-email" placeholder="nom.cognom@gencat.cat" value="' + esc(state.currentEmail || "") + '" autocomplete="email">' +
         '<div class="signin-actions">' +
@@ -2948,8 +3215,16 @@ function showSignin(force){
       return;
     }
     var prev = state.currentUser;
+    var firstRun = !state.knownUser;
     state.currentUser = name.replace(/\s+/g, " ").slice(0, 60);
     state.currentEmail = ($("signin-email").value || "").trim().toLowerCase().slice(0, 80) || null;
+    var pickedDept = ($("signin-dept") && $("signin-dept").value) || "";
+    var deptChanged = pickedDept !== (state.myDept || "");
+    state.myDept = pickedDept || null;
+    state.knownUser = true;
+    // Primera visita, o canvi de departament: reenfoquem la vista. Si no,
+    // respectem els filtres que la persona s'hagi deixat posats.
+    if (firstRun || deptChanged) applyFirstRunView();
     if (state.currentUser !== prev){
       logChange("signin", { from: prev, to: state.currentUser });
     }
@@ -2957,10 +3232,11 @@ function showSignin(force){
     var cfg = window.APP_CONFIG || {};
     isAdmin = !!(state.currentEmail && cfg.adminEmails && cfg.adminEmails.indexOf(state.currentEmail) >= 0);
     if ($("admin-menu-btn")) $("admin-menu-btn").style.display = isAdmin ? "block" : "none";
-    writeLocalPrefs({ currentUser: state.currentUser, currentEmail: state.currentEmail, editing: view.editing });
+    writeLocalPrefs(currentPrefs());
     heartbeatPresence();
     root.innerHTML = "";
     renderUserChip();
+    render();
     renderHistory();
     if (signinResolve) signinResolve();
   };
@@ -3112,7 +3388,7 @@ function revertEditValue(field, humanValue, row){
   return humanValue == null ? "" : String(humanValue);
 }
 function histKindLabel(k){ return { edit:"edició", add:"nova actuació", delete:"eliminació", import:"importació", reset:"reinici", signin:"canvi d'usuari", password:"canvi contrasenya", undo:"desfeta" }[k] || k; }
-function histKindGlyph(k){ return { edit:"✎", add:"+", delete:"×", import:"↓", reset:"↺", signin:"◉", password:"🔑", undo:"↺" }[k] || "•"; }
+function histKindGlyph(k){ return { edit:"✎", add:"+", delete:"×", import:"↓", reset:"↺", signin:"◉", password:"◆", undo:"↺" }[k] || "•"; }
 function fmtHistTime(ts){
   var d = new Date(ts), now = new Date();
   var sameDay = d.toDateString() === now.toDateString();
@@ -3283,8 +3559,8 @@ function renderPrintView(rows, groups){
         '</div>' +
         '<h4 class="pv-card-title">' + esc(r.obra || "(sense títol)") + '</h4>' +
         '<div class="pv-card-meta">' +
-          (r.loc && r.loc !== "—" ? '<span>📍 ' + esc(r.loc) + (r.vegueria ? ' · <em>' + esc(VEGUERIES[r.vegueria].label) + '</em>' : '') + '</span>' : '') +
-          '<span>🗓 ' + esc(r.data || "—") + '</span>' +
+          (r.loc && r.loc !== "—" ? '<span>' + esc(r.loc) + (r.vegueria ? ' · <em>' + esc(VEGUERIES[r.vegueria].label) + '</em>' : '') + '</span>' : '') +
+          '<span>' + esc(r.data || "—") + '</span>' +
           (eur !== null ? '<span class="pv-card-imp">💶 ' + esc(r.imp) + '</span>' : '') +
         '</div>' +
         '<div class="pv-card-fita">' +
@@ -3324,42 +3600,6 @@ function toast(msg, actionLabel, action){
   toast._t = setTimeout(hideToast, actionLabel ? 9000 : 3800);
 }
 function hideToast(){ $("toast").classList.remove("show"); }
-
-function setEditing(on){
-  view.editing = on;
-  document.body.classList.toggle("editing", on);
-  // Traiem el focus per si estava dins un camp que ara passa a no editable, i
-  // re-renderitzem perquè els contenteditable de les targetes reflecteixin el
-  // nou estat (edField els posa segons view.editing).
-  if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
-  render();
-  save();
-}
-
-function addRow(bucketKey){
-  var maxOrder = state.rows.reduce(function(m, r){ return Math.max(m, r.sort_order || 0); }, 0);
-  var row = normalizeRow({
-    id: uid(), dept: view.depts.length ? view.depts[0] : "PRE",
-    obra:"", loc:"", imp:"—", fita:"", data:"", bucket:bucketKey, status:"todo",
-    sort_order: maxOrder + 1
-  });
-  state.rows.push(row);
-  upsertRowRemote(row);
-  logChange("add", { rowId: row.id, rowLabel: "(nova actuació)", bucket: bucketKey });
-  save(true);
-  if (!view.editing) setEditing(true);
-  // Si els filtres actius amagarien la fila nova, es netegen: mai s'ha d'afegir
-  // una actuació que després no es vegi enlloc.
-  var hidden = visibleRows().every(function(r){ return r.id !== row.id; });
-  if (hidden){
-    clearFilters();
-    toast("S'han netejat els filtres per mostrar la nova actuació.");
-  } else {
-    render();
-  }
-  var el = document.querySelector('[data-id="' + row.id + '"][data-field="obra"]');
-  if (el){ el.scrollIntoView({ block:"center", behavior:"smooth" }); el.focus(); }
-}
 
 // Afegeix una actuació directament al carril d'un mes: pre-omplim la data
 // amb el nom del mes perquè caigui al carril correcte des del primer moment.
@@ -3428,7 +3668,7 @@ function cycleStatus(id){
 function clearFilters(){
   view.depts = []; view.statuses = []; view.nivells = [];
   view.encarregats = []; view.vegueries = []; view.buckets = []; view.months = [];
-  view.query = ""; view.hidePast = false;
+  view.query = ""; view.hidePast = false; view.pending = false;
   if ($("search")) $("search").value = "";
   render();
 }
@@ -3679,7 +3919,6 @@ $("filepick").addEventListener("change", function(ev){
 });
 
 function doReset(){
-  if (!confirm("Segur que vols tornar a les dades originals? Es perdran totes les teves edicions i accions de comunicació.")) return;
   var prev = state.rows;
   state.rows = SEED.map(function(r, i){
     return normalizeRow({ id:"s"+i, dept:r[0], obra:r[1], loc:r[2], imp:r[3], fita:r[4], data:r[5], bucket:r[6], top:!!r[7] });
@@ -3887,21 +4126,48 @@ document.addEventListener("click", function(e){
     }
   } else if (act === "add-month"){
     addRowInMonth(t.dataset.month);
+  } else if (act === "tpl-add" || act === "tpl-add-all"){
+    var tr = byId(view.openId);
+    if (!tr || !tr.nivell) return;
+    var all = accionsPerNivell(tr.nivell);
+    var pick = act === "tpl-add" ? [all[parseInt(t.dataset.i, 10)]] : all;
+    var before = tr.comms || "";
+    var lines = before.trim() ? before.replace(/\s+$/, "").split("\n") : [];
+    var added = 0;
+    pick.forEach(function(a){
+      if (a && !commsHasAction(lines.join("\n"), a)){ lines.push("· " + a); added++; }
+    });
+    if (!added) return;
+    tr.comms = lines.join("\n");
+    upsertRowRemote(tr);
+    logChange("edit", { rowId:tr.id, rowLabel:rowLabelOf(tr), field:"comms",
+                        from:before, to:tr.comms });
+    save(true);
+    render();
+  } else if (act === "scope-all"){
+    view.pending = false; render();
+  } else if (act === "scope-pending"){
+    view.pending = true; render();
+  } else if (act === "open-history"){
+    view.histExpanded = true;
+    renderHistory();
+    var hp = $("history-panel");
+    if (hp) hp.scrollIntoView({ behavior:"smooth", block:"end" });
+    dismissWhatsNew();
+  } else if (act === "dismiss-new"){
+    dismissWhatsNew();
+  } else if (act === "new-row"){
+    // Sense mes: cau al carril "Sense data" i l'usuari hi posa la data a la fitxa.
+    addRowInMonth(null);
   } else if (act === "excel-paste"){ showExcelPaste();
   } else if (act === "admin-panel"){ showAdminPanel();
   } else if (act === "status"){
     cycleStatus(t.dataset.id);
-  } else if (act === "add"){
-    addRow(t.dataset.bucket);
   } else if (act === "delete"){
     deleteRow(t.dataset.id);
   } else if (act === "clearfilters"){
     clearFilters();
   } else if (act === "print"){ doPrint(); }
-  else if (act === "pdf"){ doPDF(); }
-  else if (act === "pdf-help"){ showPdfHelp(); }
-  else if (act === "download"){ doDownload(); }
-  else if (act === "download-pdf"){ doDownload(); }
   else if (act === "switch-user"){ showSignin(true); }
   else if (act === "hist-clear"){
     if (!state.history.length) return;
@@ -3957,7 +4223,6 @@ if ($("hist-toggle")){
     document.body.classList.toggle("hist-open", open);
   });
 }
-$("btn-edit").addEventListener("click", function(){ setEditing(!view.editing); });
 // Botó de plegar / desplegar la sidebar. En desktop, afegeix o treu la classe
 // .sidebar-collapsed al contenidor .app (que fa collapse via grid). En mòbil,
 // obre/tanca amb .open (transform translateX). L'estat es persisteix a
@@ -4167,26 +4432,78 @@ function parseCSVLine(line){
   out.push(cur);
   return out;
 }
-function parseExcelPaste(text){
-  var lines = text.split(/\r?\n/).filter(function(l){ return l.trim(); });
+// Camps que sabem llegir, en l'ordre en què els esperem per defecte.
+var IMPORT_FIELDS = [
+  { key:"dept",       label:"Departament" },
+  { key:"obra",       label:"Obra" },
+  { key:"loc",        label:"Ubicació" },
+  { key:"imp",        label:"Import" },
+  { key:"fita",       label:"Fita" },
+  { key:"data",       label:"Data" },
+  { key:"encarregat", label:"Encarregat" },
+  { key:"nivell",     label:"Nivell" }
+];
+
+// Endevina a quina columna va cada camp llegint la capçalera. Si no n'hi ha,
+// caiem a l'ordre per defecte. Retorna { camp: índex de columna }.
+function guessColumnMap(rows){
+  var map = {};
+  IMPORT_FIELDS.forEach(function(f, i){ map[f.key] = i; });
+  var head = rows[0];
+  if (!head || !looksLikeHeader(head)) return map;
+  var SYN = {
+    dept:       ["departament","dept","departamento"],
+    obra:       ["obra","obres","actuacio","actuació","descripcio","descripció"],
+    loc:        ["ubicacio","ubicació","municipi","localitat","lloc"],
+    imp:        ["import","inversio","inversió","pressupost"],
+    fita:       ["fita","estat","situacio","situació"],
+    data:       ["data","calendari","previsio","previsió","termini"],
+    encarregat: ["encarregat","responsable","qui"],
+    nivell:     ["nivell","nivel"]
+  };
+  var found = {};
+  head.forEach(function(cell, idx){
+    var n = normDeptName(cell);
+    for (var k in SYN){
+      if (found[k] === undefined && SYN[k].indexOf(n) >= 0){ found[k] = idx; break; }
+    }
+  });
+  // Només ens fiem de la capçalera si n'hem reconegut una bona part.
+  if (Object.keys(found).length >= 3){
+    IMPORT_FIELDS.forEach(function(f){ map[f.key] = found[f.key] === undefined ? -1 : found[f.key]; });
+  }
+  return map;
+}
+
+function splitPastedRows(text){
+  var lines = String(text).split(/\r?\n/).filter(function(l){ return l.trim(); });
   var isTab = lines[0] && lines[0].indexOf("\t") >= 0;
-  var rows = lines.map(function(l){ return isTab ? l.split("\t") : parseCSVLine(l); });
+  return lines.map(function(l){ return isTab ? l.split("\t") : parseCSVLine(l); });
+}
+
+function parseExcelPaste(text, colMap){
+  var rows = splitPastedRows(text);
+  var map = colMap || guessColumnMap(rows);
+  var cell = function(r, key){
+    var i = map[key];
+    return (i === undefined || i < 0) ? "" : (r[i] || "");
+  };
   // Detecta capçalera pel que DIU, no pel que li falta. Abans n'hi havia prou
   // que no reconeguéssim el departament per llençar la fila: una actuació d'un
   // departament mal escrit desapareixia sense dir res.
   if (looksLikeHeader(rows[0])) rows.shift();
   return rows.map(function(r){
-    var dept = resolveDept(r[0]);
-    var nivell = (r[7] || "").trim().replace(/^n(ivell)?\s*/i, "").replace(/[^123]/g, "");
+    var dept = resolveDept(cell(r, "dept"));
+    var nivell = cell(r, "nivell").trim().replace(/^n(ivell)?\s*/i, "").replace(/[^123]/g, "");
     return {
       deptOk: !!dept,
       dept: dept || "PRE",
-      obra: (r[1] || "").trim(),
-      loc: (r[2] || "").trim(),
-      imp: (r[3] || "—").trim(),
-      fita: (r[4] || "").trim(),
-      data: (r[5] || "").trim(),
-      encarregat: ENC_ALIASES[(r[6] || "").trim().toLowerCase()] || "",
+      obra: cell(r, "obra").trim(),
+      loc: cell(r, "loc").trim(),
+      imp: (cell(r, "imp") || "—").trim(),
+      fita: cell(r, "fita").trim(),
+      data: cell(r, "data").trim(),
+      encarregat: ENC_ALIASES[cell(r, "encarregat").trim().toLowerCase()] || "",
       nivell: nivell
     };
   }).filter(function(r){ return r.obra; });
@@ -4200,13 +4517,17 @@ function showExcelPaste(){
     'Ordre esperat: <b>Departament · Obra · Ubicació · Import · Fita · Data · Encarregat · Nivell</b>. ' +
     'La vegueria s\'auto-omplirà a partir del municipi.</p>' +
     '<div class="dropzone" id="xls-drop">' +
-      '<span class="dz-icon">📄</span>' +
+      '<span class="dz-icon" aria-hidden="true">' +
+        '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">' +
+        '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>' +
+      '</span>' +
       '<div class="dz-hint">Arrossega un fitxer <b>.csv</b> / <b>.tsv</b> o clica per triar-lo</div>' +
       '<div class="dz-sub">També pots enganxar les cel·les directament aquí sota</div>' +
     '</div>' +
     '<input type="file" id="xls-file" accept=".csv,.tsv,.txt,text/csv,text/plain" hidden>' +
     '<div class="dz-or">o enganxa</div>' +
     '<textarea id="xls-input" placeholder="Copia les cel·les d\'Excel i enganxa-les aquí…&#10;&#10;Exemple:&#10;Salut&#9;Nou CAP Vic&#9;Vic&#9;3,5 M€&#9;Inici obres&#9;Març 2027&#9;Delegació&#9;2"></textarea>' +
+    '<div id="xls-cols"></div>' +
     '<div class="imp-mode">' +
       '<button type="button" data-mode="merge" aria-pressed="true">' +
         '<b>Afegeix i actualitza</b>' +
@@ -4231,6 +4552,7 @@ function showExcelPaste(){
       var modeBtns = [].slice.call(card.querySelectorAll("[data-mode]"));
       var lastParsed = null;
       var mode = "merge";   // per defecte no esborrem res: afegir és el cas habitual
+      var colMap = guessColumnMap([]);
       card.querySelector("[data-close]").addEventListener("click", closeModal);
 
       // Àrea de drop: acceptem CSV/TSV, els parsegem al textarea perquè el
@@ -4261,8 +4583,47 @@ function showExcelPaste(){
 
       function applyLabel(){ return mode === "replace" ? "Substitueix-ho tot" : "Afegeix i actualitza"; }
 
-      function refreshPreview(){
-        var parsed = parseExcelPaste(input.value);
+      // Ensenyem quina columna hem entès que és cada camp, i deixem corregir-ho.
+      // Abans l'ordre era obligatori i cec: un Excel amb les columnes canviades
+      // s'importava malament sense dir res.
+      function renderColumnMap(rawRows){
+        var cols = $("xls-cols");
+        if (!cols) return;
+        if (!rawRows.length){ cols.innerHTML = ""; return; }
+        var width = rawRows.reduce(function(m, r){ return Math.max(m, r.length); }, 0);
+        var sample = looksLikeHeader(rawRows[0]) ? (rawRows[1] || rawRows[0]) : rawRows[0];
+        var opts = function(sel){
+          var o = '<option value="-1"' + (sel < 0 ? " selected" : "") + ">— cap —</option>";
+          for (var c = 0; c < width; c++){
+            var peek = String(sample[c] == null ? "" : sample[c]).trim().slice(0, 18);
+            o += '<option value="' + c + '"' + (c === sel ? " selected" : "") + ">" +
+                 "Col " + (c + 1) + (peek ? " · " + esc(peek) : "") + "</option>";
+          }
+          return o;
+        };
+        cols.innerHTML =
+          '<div class="colmap">' +
+            '<div class="colmap-head">Quina columna és cada camp</div>' +
+            '<div class="colmap-grid">' +
+              IMPORT_FIELDS.map(function(f){
+                return '<label class="colmap-row"><span>' + esc(f.label) + '</span>' +
+                  '<select data-col="' + f.key + '">' + opts(colMap[f.key]) + '</select></label>';
+              }).join("") +
+            '</div>' +
+          '</div>';
+        cols.querySelectorAll("select[data-col]").forEach(function(sel){
+          sel.addEventListener("change", function(){
+            colMap[sel.dataset.col] = parseInt(sel.value, 10);
+            refreshPreview(true);
+          });
+        });
+      }
+
+      function refreshPreview(keepMap){
+        var rawRows = splitPastedRows(input.value);
+        if (!keepMap) colMap = guessColumnMap(rawRows);
+        renderColumnMap(rawRows);
+        var parsed = parseExcelPaste(input.value, colMap);
         lastParsed = parsed;
         apply.textContent = applyLabel();
         if (!parsed.length){ preview.innerHTML = ""; apply.disabled = true; return; }
@@ -4276,7 +4637,8 @@ function showExcelPaste(){
         });
         var pastNames = {};
         parsed.forEach(function(p){ pastNames[p.obra.toLowerCase().trim()] = true; });
-        var restCount = state.rows.filter(function(r){ return !pastNames[r.obra.toLowerCase().trim()]; }).length;
+        var rest = state.rows.filter(function(r){ return !pastNames[r.obra.toLowerCase().trim()]; });
+        var restCount = rest.length;
 
         // Files on no hem sabut identificar el departament: acabarien a
         // Presidència sense dir res, així que ho avisem abans d'aplicar.
@@ -4293,8 +4655,10 @@ function showExcelPaste(){
             : '<span class="cnt keep"><b>' + restCount + '</b> es queden com estan</span>') +
         "</div>" +
         (mode === "replace" && restCount > 0
-          ? '<div class="modal-err">Aquestes ' + restCount + " actuacions s'esborraran, amb els seus comentaris. " +
-            "Si només vols afegir-ne o corregir-ne algunes, tria «Afegeix i actualitza».</div>"
+          ? '<div class="modal-err">S\'esborraran, amb els seus comentaris: <b>' +
+            esc(rest.slice(0, 4).map(function(r){ return r.obra; }).join(", ")) +
+            (restCount > 4 ? "</b> i " + (restCount - 4) + " més." : "</b>.") +
+            " Si només vols afegir-ne o corregir-ne algunes, tria «Afegeix i actualitza».</div>"
           : "") +
         (badDept > 0
           ? '<div class="modal-err">' + badDept + (badDept === 1 ? " fila té" : " files tenen") +
@@ -4308,11 +4672,11 @@ function showExcelPaste(){
         b.addEventListener("click", function(){
           mode = b.dataset.mode;
           modeBtns.forEach(function(x){ x.setAttribute("aria-pressed", x === b ? "true" : "false"); });
-          refreshPreview();
+          refreshPreview(true);
         });
       });
 
-      input.addEventListener("input", refreshPreview);
+      input.addEventListener("input", function(){ refreshPreview(false); });
       apply.addEventListener("click", async function(){
         if (!lastParsed || !lastParsed.length) return;
         apply.disabled = true; apply.textContent = "Aplicant…";
@@ -4409,6 +4773,16 @@ function showAdminPanel(){
     '<label style="font-size:12px; color:var(--ink-2)">Confirma-la</label>' +
     '<input type="password" id="new-pw2" placeholder="Torna-la a escriure">' +
     '<div class="modal-err" id="admin-err" style="display:none"></div>' +
+    // Acció irreversible. Abans vivia al menú «Dades», dues línies per sota de
+    // «Desa una còpia»: massa a prop de la mà de qualsevol.
+    '<div class="danger-zone">' +
+      '<div class="dz-title">Tornar a les dades originals</div>' +
+      "<p>Esborra les 118 actuacions actuals i les substitueix per la llista inicial. " +
+      "Es perden tots els comentaris, nivells i assignacions. Desa\'n una còpia abans.</p>" +
+      '<label>Escriu <b>ESBORRAR</b> per confirmar-ho</label>' +
+      '<input type="text" id="reset-confirm" autocomplete="off" placeholder="ESBORRAR">' +
+      '<button class="btn" id="reset-go" disabled>Torna a les dades originals</button>' +
+    '</div>' +
     '<div class="modal-actions">' +
       '<button class="btn" data-close>Tanca</button>' +
       '<button class="btn primary" id="pw-save">Desa la contrasenya</button>' +
@@ -4416,6 +4790,14 @@ function showAdminPanel(){
     function(card){
       var err = card.querySelector("#admin-err");
       card.querySelector("[data-close]").addEventListener("click", closeModal);
+      var rc = card.querySelector("#reset-confirm");
+      var rg = card.querySelector("#reset-go");
+      rc.addEventListener("input", function(){ rg.disabled = rc.value.trim() !== "ESBORRAR"; });
+      rg.addEventListener("click", function(){
+        if (rc.value.trim() !== "ESBORRAR") return;
+        closeModal();
+        doReset();
+      });
       card.querySelector("#pw-save").addEventListener("click", async function(){
         var a = card.querySelector("#new-pw").value;
         var b = card.querySelector("#new-pw2").value;
@@ -4576,7 +4958,9 @@ function renderTimelineStrip(byMonth){
     var n = counts[k];
     var isCur = k === cur;
     var sel = view.months.indexOf(k) >= 0;
-    var h = n ? Math.max(4, Math.round(n / maxN * 52)) : 3;
+    // 42 i no 52: el número va per sobre de la barra i, amb la barra més
+    // alta, quedava tallat pel marge del contenidor.
+    var h = n ? Math.max(4, Math.round(n / maxN * 42)) : 3;
     var y = k === "SENSE" ? "" : k.slice(0,4);
     var showYear = y && y !== lastYear;
     if (y) lastYear = y;
@@ -4710,7 +5094,6 @@ async function boot(){
   document.getElementById("boot").classList.add("hidden");
 
   loadLocalPrefs();
-  document.body.classList.toggle("editing", view.editing);
 
   try{
     await loadInitial();
@@ -4726,7 +5109,11 @@ async function boot(){
   if (adminBtn) adminBtn.style.display = isAdmin ? "block" : "none";
 
   renderNotice();
+  // Marquem aquesta visita abans del primer render (que ja desa les prefs):
+  // state.lastSeenAt conserva la visita anterior per comparar-hi.
+  state.seenAt = Date.now();
   render();
+  renderWhatsNew();
   applySidebarState();
   setSyncState("on");
 

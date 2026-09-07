@@ -55,9 +55,16 @@ await page.fill('#pw-input','canviam'); await page.click('#pw-ok'); await page.w
 await page.fill('#signin-input','Anna Sala');
 await page.fill('#signin-email','admin@exemple.cat');
 await page.click('#signin-ok'); await page.waitForTimeout(600);
+// La primera visita entra enfocada (pendents, sense mesos passats).
+// Per a la resta de proves volem el tauler sencer.
+await page.click('.fb-clear'); await page.waitForTimeout(500);
 
 const worksCount = () => page.locator('.pill-item, .fc').count();
+// La importació ja no és el botó estrella del lateral: viu al menú «Dades»,
+// que és on toca una acció que es fa un cop al trimestre.
 const openImport = async () => {
+  await page.click('details.menu > summary');
+  await page.waitForTimeout(150);
   await page.click('[data-act="excel-paste"]');
   await page.waitForTimeout(400);
 };

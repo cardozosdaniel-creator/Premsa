@@ -50,6 +50,9 @@ await page.fill('#pw-input','canviam'); await page.click('#pw-ok'); await page.w
 await page.fill('#signin-input','Anna Sala');
 await page.fill('#signin-email','admin@exemple.cat');
 await page.click('#signin-ok'); await page.waitForTimeout(600);
+// La primera visita entra enfocada (pendents, sense mesos passats).
+// Per a la resta de proves volem el tauler sencer.
+await page.click('.fb-clear'); await page.waitForTimeout(500);
 
 // ═══ 5. ORDRE PER INVERSIÓ ═══
 const setLane = page.locator('.lane[data-month="2026-09"]');
