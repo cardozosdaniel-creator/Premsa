@@ -29,11 +29,12 @@ pla-obres/
 └── README.md               ← aquest fitxer
 ```
 
-> **Nota sobre `vegueries-geo.js`.** La versió d'aquesta carpeta és el mapa
-> **esquemàtic** de les 8 vegueries (polígons aproximats, viewBox `0 0 500 380`).
-> Funciona i és clicable, però no és cartografia oficial. Si tens la versió
-> generada a partir del GeoJSON de l'ICGC, substitueix el fitxer i actualitza
-> també `window.VEGUERIA_VIEWBOX` al viewBox que correspongui.
+> **Nota sobre `vegueries-geo.js`.** Són les 8 vegueries projectades al viewBox
+> `0 0 800 600` a partir del GeoJSON oficial de l'ICGC (divisions
+> administratives v2r2, vegueries 1:5.000), simplificades a ~180 punts per
+> polígon perquè el fitxer sigui lleuger al navegador. La Val d'Aran hi va
+> fusionada dins d'`alt-pirineu-aran`. Si el regeneres, exporta sempre
+> `window.VEGUERIA_SHAPES` i `window.VEGUERIA_VIEWBOX` alhora.
 
 ---
 
