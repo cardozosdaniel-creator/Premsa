@@ -97,10 +97,14 @@ check('Hi ha ajuda dels nivells', (await page.locator('.lvl-help').count()) === 
 await page.click('.lvl-help > summary');
 await page.waitForTimeout(300);
 const lvlText = await page.locator('.lvl-help-body').innerText();
-check('Explica N1 (bàsic)', /B[àa]sic/.test(lvlText) && /Cartell/.test(lvlText));
-check('Explica N2 (reforçat)', /Refor/.test(lvlText) && /Bustiada/.test(lvlText));
-check('Explica N3 (intensiu)', /Intensiu/.test(lvlText) && /Oficina/.test(lvlText));
+check('Explica N1 (bàsic)', /b[àa]sica/i.test(lvlText) && /cartell/i.test(lvlText));
+check('Explica N2 (reforçat)', /refor/i.test(lvlText) && /bustiada/i.test(lvlText));
+check('Explica N3 (intensiu)', /intensiva/i.test(lvlText) && /oficina/i.test(lvlText));
 check('Explica el criteri (el més exigent)', /m[ée]s exigent/.test(lvlText));
+// El protocol és explícit sobre això i és el que més es malinterpreta.
+check("Diu que l'impacte mana sobre la inversió", /impacte.*determinar la intensitat/is.test(lvlText));
+check('Recull el cas de baixa inversió amb molt impacte',
+  /baixa inversió amb afectació ciutadana molt elevada/i.test(lvlText));
 
 // ═══ 2. PDF NO EN BLANC ═══
 await page.emulateMedia({ media:'print' });

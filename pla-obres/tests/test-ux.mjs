@@ -100,37 +100,100 @@ check('El botó d\'afegir sobreviu al mes desplegat',
   (await page.locator('.lane[data-month="2026-09"] .pill-add').count()) === 1);
 await page.click('.lane[data-month="2026-09"] .lane-gutter'); await page.waitForTimeout(400);
 
-// ═══ 6. PLANTILLES PER NIVELL ═══
+// ═══ 6. PLANTILLES PER NIVELL, PER FASES ═══
 await page.click('.pill-item:has-text("CAP Torredembarra")'); await page.waitForTimeout(500);
 check('Sense nivell, convida a triar-ne un',
   /tria un nivell/i.test(await page.locator('#drawer').innerText()));
-check('Proposa un nivell per inversió',
-  /per inversió/i.test(await page.locator('#drawer').innerText()),
-  (await page.locator('.dw-suggest').count()) ? 'hi és' : 'no hi és');
-// 11,51 M€ → entre 5 i 20 → Nivell 2
-await page.click('.dw-suggest-go'); await page.waitForTimeout(600);
+check("Ofereix calcular el nivell per impacte",
+  (await page.locator('[data-act="dw-impacte"]').count()) === 1);
+check("Diu que la inversió no és qui mana",
+  /criteri més exigent/i.test(await page.locator('.dw-suggest').innerText()),
+  await page.locator('.dw-suggest').innerText());
+
+// ── Calculadora d'impacte (secció 5 del protocol) ──
+await page.click('[data-act="dw-impacte"]'); await page.waitForTimeout(500);
+check('La calculadora té els 12 factors', (await page.locator('.imp-row').count()) === 12,
+  String(await page.locator('.imp-row').count()));
+check('Cada factor va de 0 a 3', (await page.locator('.imp-row >> nth=0 >> .imp-v').count()) === 4);
+check('Comença a 0 punts i nivell 1',
+  /\b0\b/.test(await page.locator('.imp-total').innerText()) &&
+  /nivell 1/i.test(await page.locator('.imp-lv').innerText()));
+
+// 12 factors × 1 punt = 12 → tram de 9 a 20 → nivell 2
+for (let i = 0; i < 12; i++) await page.click(`.imp-row >> nth=${i} >> .imp-v[data-v="1"]`);
+await page.waitForTimeout(300);
+check('12 punts donen nivell 2',
+  /nivell 2/i.test(await page.locator('.imp-lv').innerText()),
+  await page.locator('.imp-total').innerText() + ' → ' + await page.locator('.imp-lv').innerText());
+
+// 12 × 2 = 24 → més de 20 → nivell 3
+for (let i = 0; i < 12; i++) await page.click(`.imp-row >> nth=${i} >> .imp-v[data-v="2"]`);
+await page.waitForTimeout(300);
+check('24 punts donen nivell 3', /nivell 3/i.test(await page.locator('.imp-lv').innerText()));
+
+// L'afectació crítica mana per damunt de la puntuació
+for (let i = 0; i < 12; i++) await page.click(`.imp-row >> nth=${i} >> .imp-v[data-v="0"]`);
+await page.waitForTimeout(300);
+check('Sense punts torna a nivell 1', /nivell 1/i.test(await page.locator('.imp-lv').innerText()));
+await page.check('#imp-critica'); await page.waitForTimeout(300);
+check("L'afectació crítica porta al nivell 3 amb 0 punts",
+  /nivell 3/i.test(await page.locator('.imp-lv').innerText()),
+  await page.locator('.imp-total').innerText());
+await page.uncheck('#imp-critica'); await page.waitForTimeout(200);
+for (let i = 0; i < 12; i++) await page.click(`.imp-row >> nth=${i} >> .imp-v[data-v="1"]`);
+await page.waitForTimeout(300);
+await page.click('#imp-apply'); await page.waitForTimeout(700);
+
 const dw = await page.locator('#drawer').innerText();
-check('Aplicar la proposta posa el Nivell 2', /nivell 2/i.test(dw));
-check('Apareixen les accions del nivell', (await page.locator('.tpl-item').count()) === 8,
-  String(await page.locator('.tpl-item').count()));
-check('Cap marcada encara', (await page.locator('.tpl-item.on').count()) === 0);
+check('Aplicar la puntuació posa el nivell a la fitxa', /nivell 2/i.test(dw));
 
-await page.click('.tpl-item >> nth=0'); await page.waitForTimeout(600);
+// ── Accions per fases ──
+check('Les accions surten separades per fases', (await page.locator('.tpl-fase').count()) === 3,
+  String(await page.locator('.tpl-fase').count()));
+check("Les fases són abans, durant i després",
+  /abans de l'obra/i.test(dw) && /durant l'obra/i.test(dw) && /després de l'obra/i.test(dw));
+// Nivell 2 del protocol: 10 abans + 11 durant + 6 després = 27
+check('El comptador suma les 27 accions del Nivell 2',
+  /0\s*\/\s*27/.test(await page.locator('.dw-tpl-n').innerText()),
+  await page.locator('.dw-tpl-n').innerText());
+// Aquesta ja té encarregat assignat: no ha de sortir cap avís.
+check("Amb responsable assignat no avisa de res",
+  (await page.locator('.dw-tpl-warn').count()) === 0);
+
+await page.click('.tpl-fase >> nth=0 >> .tpl-item >> nth=0'); await page.waitForTimeout(600);
 const comms1 = await page.locator('#drawer [data-dwfield="comms"]').inputValue();
-check("Clicar una acció l'escriu al pla", comms1.includes("Cartell informatiu a peu d'obra"), comms1);
-check('I queda marcada', (await page.locator('.tpl-item.on').count()) === 1);
+check("Clicar una acció l'escriu al pla",
+  comms1.includes("Pla específic de comunicació de proximitat"), comms1.replace(/\n/g,' | '));
+check("I l'escriu sota la seva fase", /ABANS DE L'OBRA/i.test(comms1), comms1.replace(/\n/g,' | '));
 
-await page.click('.tpl-all'); await page.waitForTimeout(700);
+await page.click('.tpl-fase >> nth=0 >> .tpl-all'); await page.waitForTimeout(800);
 const comms2 = await page.locator('#drawer [data-dwfield="comms"]').inputValue();
-check('Afegeix-les totes completa la llista', (await page.locator('.tpl-item.on').count()) === 8,
-  String(await page.locator('.tpl-item.on').count()));
+check('Afegeix tota la fase completa les 10 de "abans"',
+  /10\s*\/\s*10/.test(await page.locator('.tpl-fase >> nth=0 >> .tpl-fase-n').innerText()),
+  await page.locator('.tpl-fase >> nth=0 >> .tpl-fase-n').innerText());
 check('Sense duplicar la que ja hi era',
-  comms2.split("Cartell informatiu a peu d'obra").length - 1 === 1);
-check('El comptador ho reflecteix', /8\s*\/\s*8/.test(await page.locator('.dw-tpl-n').innerText()));
+  comms2.split("Pla específic de comunicació de proximitat").length - 1 === 1);
+check("Les altres fases segueixen buides",
+  /0\s*\/\s*11/.test(await page.locator('.tpl-fase >> nth=1 >> .tpl-fase-n').innerText()));
+
 await page.click('.dw-close'); await page.waitForTimeout(400);
 check('Ja no surt com a pendent',
   (await page.locator('.pill-item.pending').count()) === 2,
   String(await page.locator('.pill-item.pending').count()));
+
+// El protocol demana responsable de comunicació als nivells 2 i 3: aquesta
+// no en té, així que en posar-li un nivell 2 ha d'avisar.
+await page.click('.pill-item:has-text("Biblioteca de Reus")'); await page.waitForTimeout(500);
+check('Sense nivell encara no avisa', (await page.locator('.dw-tpl-warn').count()) === 0);
+await page.click('[data-act="dw-nivell"][data-key="1"]'); await page.waitForTimeout(600);
+check('El nivell 1 no necessita responsable', (await page.locator('.dw-tpl-warn').count()) === 0);
+await page.click('[data-act="dw-nivell"][data-key="2"]'); await page.waitForTimeout(600);
+check("El nivell 2 sí que reclama responsable",
+  (await page.locator('.dw-tpl-warn').count()) === 1,
+  await page.locator('#drawer').innerText().then(x => /responsable/i.test(x) ? 'avisa' : 'no avisa'));
+await page.click('[data-act="dw-enc"][data-key="delegacio"]'); await page.waitForTimeout(600);
+check("En assignar-lo, l'avís desapareix", (await page.locator('.dw-tpl-warn').count()) === 0);
+await page.click('.dw-close'); await page.waitForTimeout(400);
 
 // ═══ 7. EL QUE HEM TRET ═══
 check("No queda el mode d'edició global", (await page.locator('#btn-edit').count()) === 0);
