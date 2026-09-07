@@ -25,7 +25,7 @@ pla-obres/
 ├── supabase/
 │   ├── 01-schema.sql       ← crea les taules
 │   └── 02-seed.sql         ← insereix les 118 obres inicials
-├── tests/test-v5.mjs       ← proves automàtiques (Playwright)
+├── tests/                  ← proves automàtiques (Playwright)
 └── README.md               ← aquest fitxer
 ```
 
@@ -122,7 +122,9 @@ Per executar les proves automàtiques:
 
 ```bash
 npm install playwright
-node tests/test-v5.mjs             # atenció: sobreescriu config.js amb un mock
+node tests/test-v5.mjs             # calendari, PDF, mapa, nivells
+node tests/test-import.mjs         # importació d'Excel (els dos modes)
+# atenció: sobreescriuen config.js amb un mock — recupera'l després
 ```
 
 ---

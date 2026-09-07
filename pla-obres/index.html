@@ -1079,6 +1079,24 @@
   .modal-preview .cnt.add b{ color:var(--ok); }
   .modal-preview .cnt.upd b{ color:var(--warn); }
   .modal-preview .cnt.del b{ color:var(--danger); }
+  .modal-preview .cnt.keep b{ color:var(--ink-2); }
+
+  /* Selector de mode d'importació: afegir sense esborrar vs substituir-ho tot */
+  .imp-mode{ display:flex; gap:8px; margin:14px 0 10px; }
+  .imp-mode button{
+    flex:1; text-align:left; padding:10px 12px; border-radius:8px; cursor:pointer;
+    border:1px solid var(--line); background:var(--surface); color:var(--ink);
+    font:inherit; font-size:12.5px; line-height:1.45;
+  }
+  .imp-mode button b{ display:block; font-size:13px; margin-bottom:2px; }
+  .imp-mode button small{ color:var(--ink-3); font-size:11.5px; }
+  .imp-mode button:hover{ border-color:var(--ink-3); }
+  .imp-mode button[aria-pressed="true"]{
+    border-color:var(--accent); box-shadow:inset 0 0 0 1px var(--accent); background:var(--surface-2);
+  }
+  .imp-mode button.mode-replace[aria-pressed="true"]{
+    border-color:var(--danger); box-shadow:inset 0 0 0 1px var(--danger);
+  }
   .modal-err{ background:var(--danger-bg); color:var(--danger); border:1px solid var(--danger-line); padding:8px 12px; border-radius:6px; font-size:12px; margin:8px 0; }
 
   /* Zona de drop per fitxers al modal d'Excel */
@@ -2236,7 +2254,7 @@ async function deleteRowRemote(id){
 async function insertHistoryRemote(entry){
   if (!supabase) return;
   try{
-    var extra = {}; ["restored","count","author","from","to"].forEach(function(k){
+    var extra = {}; ["restored","count","author","mode","from","to"].forEach(function(k){
       if (entry[k] !== undefined && ["from","to"].indexOf(k) < 0) extra[k] = entry[k];
     });
     var { error } = await supabase.from("history").insert({
@@ -3111,7 +3129,9 @@ function histSentence(h){
   }
   if (h.kind === "add") return (h.restored ? "Ha restaurat" : "Ha afegit") + ' <em>' + esc(h.rowLabel || "una actuació") + "</em>.";
   if (h.kind === "delete") return "Ha esborrat <em>" + esc(h.rowLabel || "una actuació") + "</em>.";
-  if (h.kind === "import") return "Ha importat " + esc(h.count) + " actuacions" + (h.author ? " (fitxer d'" + esc(h.author) + ")" : "") + ".";
+  if (h.kind === "import") return "Ha importat " + esc(h.count) + " actuacions"
+    + (h.mode === "replace" ? " substituint tota la llista" : h.mode === "merge" ? " sense esborrar la resta" : "")
+    + (h.author ? " (fitxer d'" + esc(h.author) + ")" : "") + ".";
   if (h.kind === "reset") return "Ha restaurat les dades originals.";
   if (h.kind === "undo") return "Ha desfet un canvi anterior.";
   if (h.kind === "password") return "Ha canviat la contrasenya d'accés.";
@@ -4063,11 +4083,64 @@ async function requirePassword(){
 // Espera 8 columnes tabulars: Departament, Obra, Ubicació, Import, Fita, Data, Encarregat, Nivell.
 // Detecta i ignora la fila de capçalera. Substitueix la llista sencera preservant
 // comentaris/nivell/encarregat/status per coincidència de nom d'obra.
-var DEPT_ALIASES = {
-  "salut":"SLT", "presidencia":"PRE", "presidència":"PRE", "interior":"ISP", "isp":"ISP",
-  "territori":"TER", "justicia":"JUS", "justícia":"JUS", "agricultura":"ARP", "arp":"ARP",
-  "darpa":"ARP", "agricultura (darpa)":"ARP", "educacio":"EDU", "educació":"EDU"
-};
+// Normalitza un nom de departament per poder-lo buscar: minúscules, sense
+// accents i sense espais sobrants. Així «Justícia», «JUSTICIA» i «justicia»
+// són la mateixa cosa.
+function normDeptName(s){
+  return String(s == null ? "" : s).toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ").trim();
+}
+
+// Els àlies es generen a partir dels 16 departaments reals (sigla, nom
+// complet i nom curt), de manera que no cal mantenir-los a mà quan canvia
+// el Govern. A sota hi afegim els noms col·loquials i històrics que fem
+// servir als fitxers d'Excel.
+var DEPT_ALIASES = (function(){
+  var m = {};
+  DEPTS_META.forEach(function(d){
+    [d.key, d.label, d.short].forEach(function(v){
+      if (v) m[normDeptName(v)] = d.key;
+    });
+  });
+  var extra = {
+    "darpa":"ARP", "agricultura (darpa)":"ARP", "agricultura i ramaderia":"ARP",
+    "economia":"ECF", "finances":"ECF", "isp":"ISP", "interior i seguretat":"ISP",
+    "drets socials":"DSI", "empresa":"EMT", "treball":"EMT",
+    "recerca":"REU", "universitats":"REU", "igualtat":"IFE", "feminisme":"IFE",
+    "llengua":"PLG", "politica linguistica":"PLG",
+    "unio europea":"UEX", "accio exterior":"UEX", "exteriors":"UEX",
+    "esport":"ESP", "habitatge":"TER", "transicio ecologica":"TER"
+  };
+  for (var k in extra) m[k] = extra[k];
+  return m;
+})();
+
+// Paraules que apareixen a la fila de capçalera d'un Excel, normalitzades.
+var HEADER_WORDS = ["departament","dept","departamento","obra","actuacio","obres",
+  "ubicacio","municipi","localitat","import","inversio", "fita","data","calendari",
+  "encarregat","responsable","nivell"];
+
+// Una fila és capçalera si ho sembla pel seu contingut. Si la primera cel·la
+// ja és un departament conegut, és de dades i prou.
+function looksLikeHeader(cells){
+  if (!cells || !cells.length) return false;
+  if (resolveDept(cells[0])) return false;
+  var hits = 0;
+  cells.forEach(function(c){ if (HEADER_WORDS.indexOf(normDeptName(c)) >= 0) hits++; });
+  return hits >= 2;
+}
+
+// Resol el text de la columna «Departament» a una sigla, o null si no el
+// reconeixem (aleshores avisem a la previsualització en comptes de callar).
+function resolveDept(cell){
+  var raw = String(cell == null ? "" : cell).trim();
+  if (!raw) return null;
+  var byAlias = DEPT_ALIASES[normDeptName(raw)];
+  if (byAlias) return byAlias;
+  var up = raw.toUpperCase();
+  return DEPTS[up] ? up : null;
+}
 var ENC_ALIASES = {
   "delegacio":"delegacio", "delegació":"delegacio", "delegacio territorial":"delegacio",
   "delegació territorial":"delegacio", "conseller":"conseller", "consellera":"conseller",
@@ -4098,15 +4171,16 @@ function parseExcelPaste(text){
   var lines = text.split(/\r?\n/).filter(function(l){ return l.trim(); });
   var isTab = lines[0] && lines[0].indexOf("\t") >= 0;
   var rows = lines.map(function(l){ return isTab ? l.split("\t") : parseCSVLine(l); });
-  // Detecta capçalera: si la primera cel·la és un dept conegut, no hi ha capçalera
-  var first = (rows[0] && rows[0][0] || "").trim().toLowerCase();
-  var hasHeader = !(DEPT_ALIASES[first] || first.length === 3 && DEPTS[first.toUpperCase()]);
-  if (hasHeader) rows.shift();
+  // Detecta capçalera pel que DIU, no pel que li falta. Abans n'hi havia prou
+  // que no reconeguéssim el departament per llençar la fila: una actuació d'un
+  // departament mal escrit desapareixia sense dir res.
+  if (looksLikeHeader(rows[0])) rows.shift();
   return rows.map(function(r){
-    var dept = DEPT_ALIASES[(r[0] || "").trim().toLowerCase()] || (r[0] || "").trim().toUpperCase();
+    var dept = resolveDept(r[0]);
     var nivell = (r[7] || "").trim().replace(/^n(ivell)?\s*/i, "").replace(/[^123]/g, "");
     return {
-      dept: DEPTS[dept] ? dept : "PRE",
+      deptOk: !!dept,
+      dept: dept || "PRE",
       obra: (r[1] || "").trim(),
       loc: (r[2] || "").trim(),
       imp: (r[3] || "—").trim(),
@@ -4121,8 +4195,8 @@ function parseExcelPaste(text){
 function showExcelPaste(){
   openModal(
     '<h2 class="serif">Importar dades des d\'Excel</h2>' +
-    '<p class="sub">Substitueix la llista d\'obres amb les dades del teu Excel o CSV, ' +
-    'preservant els comentaris i assignacions per coincidència de nom. ' +
+    '<p class="sub">Porta dades del teu Excel o CSV al pla. Les actuacions que ja hi són ' +
+    "es reconeixen pel nom de l'obra i conserven els comentaris, el nivell, l'encarregat i l'estat. " +
     'Ordre esperat: <b>Departament · Obra · Ubicació · Import · Fita · Data · Encarregat · Nivell</b>. ' +
     'La vegueria s\'auto-omplirà a partir del municipi.</p>' +
     '<div class="dropzone" id="xls-drop">' +
@@ -4133,10 +4207,20 @@ function showExcelPaste(){
     '<input type="file" id="xls-file" accept=".csv,.tsv,.txt,text/csv,text/plain" hidden>' +
     '<div class="dz-or">o enganxa</div>' +
     '<textarea id="xls-input" placeholder="Copia les cel·les d\'Excel i enganxa-les aquí…&#10;&#10;Exemple:&#10;Salut&#9;Nou CAP Vic&#9;Vic&#9;3,5 M€&#9;Inici obres&#9;Març 2027&#9;Delegació&#9;2"></textarea>' +
+    '<div class="imp-mode">' +
+      '<button type="button" data-mode="merge" aria-pressed="true">' +
+        '<b>Afegeix i actualitza</b>' +
+        "<small>Les obres que no surtin a l'Excel es queden com estan. És el mode segur.</small>" +
+      '</button>' +
+      '<button type="button" class="mode-replace" data-mode="replace" aria-pressed="false">' +
+        '<b>Substitueix-ho tot</b>' +
+        "<small>El pla queda exactament igual que l'Excel. La resta s'esborra.</small>" +
+      '</button>' +
+    '</div>' +
     '<div id="xls-preview"></div>' +
     '<div class="modal-actions">' +
       '<button class="btn" data-close>Cancel·la</button>' +
-      '<button class="btn primary" id="xls-apply" disabled>Substitueix les obres</button>' +
+      '<button class="btn primary" id="xls-apply" disabled>Afegeix i actualitza</button>' +
     '</div>',
     function(card){
       var input = card.querySelector("#xls-input");
@@ -4144,7 +4228,9 @@ function showExcelPaste(){
       var apply = card.querySelector("#xls-apply");
       var drop = card.querySelector("#xls-drop");
       var fileInput = card.querySelector("#xls-file");
+      var modeBtns = [].slice.call(card.querySelectorAll("[data-mode]"));
       var lastParsed = null;
+      var mode = "merge";   // per defecte no esborrem res: afegir és el cas habitual
       card.querySelector("[data-close]").addEventListener("click", closeModal);
 
       // Àrea de drop: acceptem CSV/TSV, els parsegem al textarea perquè el
@@ -4173,11 +4259,15 @@ function showExcelPaste(){
       });
       drop.addEventListener("drop", function(e){ handleFile(e.dataTransfer.files[0]); });
 
-      input.addEventListener("input", function(){
+      function applyLabel(){ return mode === "replace" ? "Substitueix-ho tot" : "Afegeix i actualitza"; }
+
+      function refreshPreview(){
         var parsed = parseExcelPaste(input.value);
         lastParsed = parsed;
+        apply.textContent = applyLabel();
         if (!parsed.length){ preview.innerHTML = ""; apply.disabled = true; return; }
-        // Compara amb les actuals per veure additions/updates/deletions.
+        // Compara amb les actuals: quantes són noves, quantes ja hi eren i
+        // quantes de les que hi ha ara no surten a l'Excel.
         var byName = {};
         state.rows.forEach(function(r){ byName[r.obra.toLowerCase().trim()] = r; });
         var newCount = 0, updCount = 0;
@@ -4186,21 +4276,54 @@ function showExcelPaste(){
         });
         var pastNames = {};
         parsed.forEach(function(p){ pastNames[p.obra.toLowerCase().trim()] = true; });
-        var delCount = state.rows.filter(function(r){ return !pastNames[r.obra.toLowerCase().trim()]; }).length;
+        var restCount = state.rows.filter(function(r){ return !pastNames[r.obra.toLowerCase().trim()]; }).length;
+
+        // Files on no hem sabut identificar el departament: acabarien a
+        // Presidència sense dir res, així que ho avisem abans d'aplicar.
+        var bad = parsed.filter(function(p){ return !p.deptOk; });
+        var badDept = bad.length;
+        var badDeptNames = bad.slice(0, 3).map(function(p){ return p.obra; }).join(", ")
+          + (badDept > 3 ? "…" : "");
+
         preview.innerHTML = '<div class="modal-preview">' +
           '<span class="cnt add"><b>' + newCount + '</b> noves</span>' +
           '<span class="cnt upd"><b>' + updCount + '</b> actualitzades (mantenint comentaris)</span>' +
-          '<span class="cnt del"><b>' + delCount + '</b> desapareixen</span>' +
-        "</div>";
+          (mode === "replace"
+            ? '<span class="cnt del"><b>' + restCount + '</b> desapareixen</span>'
+            : '<span class="cnt keep"><b>' + restCount + '</b> es queden com estan</span>') +
+        "</div>" +
+        (mode === "replace" && restCount > 0
+          ? '<div class="modal-err">Aquestes ' + restCount + " actuacions s'esborraran, amb els seus comentaris. " +
+            "Si només vols afegir-ne o corregir-ne algunes, tria «Afegeix i actualitza».</div>"
+          : "") +
+        (badDept > 0
+          ? '<div class="modal-err">' + badDept + (badDept === 1 ? " fila té" : " files tenen") +
+            " un departament que no reconeixem" + (badDeptNames ? " (" + esc(badDeptNames) + ")" : "") +
+            ". Aniran a Presidència: revisa la primera columna.</div>"
+          : "");
         apply.disabled = false;
+      }
+
+      modeBtns.forEach(function(b){
+        b.addEventListener("click", function(){
+          mode = b.dataset.mode;
+          modeBtns.forEach(function(x){ x.setAttribute("aria-pressed", x === b ? "true" : "false"); });
+          refreshPreview();
+        });
       });
+
+      input.addEventListener("input", refreshPreview);
       apply.addEventListener("click", async function(){
         if (!lastParsed || !lastParsed.length) return;
         apply.disabled = true; apply.textContent = "Aplicant…";
-        // Mapa per preservar comm/nivell/encarregat/status per coincidència de nom.
+        // Mapa per preservar, per coincidència de nom, tot allò que s'edita
+        // dins de l'app i que l'Excel no porta: comentaris, nivell, encarregat,
+        // estat, vegueria assignada a mà i marca de Top 10.
         var byName = {};
         state.rows.forEach(function(r){ byName[r.obra.toLowerCase().trim()] = r; });
-        var newRows = lastParsed.map(function(p, i){
+        var maxOrder = state.rows.reduce(function(m, r){ return Math.max(m, r.sort_order || 0); }, 0);
+
+        var touched = lastParsed.map(function(p, i){
           var existing = byName[p.obra.toLowerCase().trim()];
           return normalizeRow({
             id: existing ? existing.id : uid(),
@@ -4210,25 +4333,44 @@ function showExcelPaste(){
             nivell: p.nivell || (existing && existing.nivell) || "",
             comms: (existing && existing.comms) || "",
             status: (existing && existing.status) || "todo",
+            kind: (existing && existing.kind) || "",
+            vegueria: (existing && existing.vegueria) || "",
             top: existing ? existing.top : false,
-            sort_order: i + 1
+            // En substituir, l'ordre el marca l'Excel; en afegir, respectem
+            // l'ordre que ja hi havia i posem les noves al final.
+            sort_order: mode === "replace" ? i + 1
+                      : existing ? existing.sort_order : maxOrder + 1 + i
           });
         });
         try{
-          // Truncat + insercions en batch
-          var { error: delErr } = await supabase.from("works").delete().neq("id", "__none__");
-          if (delErr) throw delErr;
-          var batch = newRows.map(rowToDb);
-          for (var i = 0; i < batch.length; i += 50){
-            var { error: insErr } = await supabase.from("works").insert(batch.slice(i, i + 50));
-            if (insErr) throw insErr;
+          if (mode === "replace"){
+            // Truncat + insercions en batch: el pla queda igual que l'Excel.
+            var { error: delErr } = await supabase.from("works").delete().neq("id", "__none__");
+            if (delErr) throw delErr;
+            var batch = touched.map(rowToDb);
+            for (var i = 0; i < batch.length; i += 50){
+              var { error: insErr } = await supabase.from("works").insert(batch.slice(i, i + 50));
+              if (insErr) throw insErr;
+            }
+            state.rows = touched;
+          } else {
+            // No esborrem res: només escrivim les files que porta l'Excel.
+            var up = touched.map(rowToDb);
+            for (var j = 0; j < up.length; j += 50){
+              var { error: upErr } = await supabase.from("works").upsert(up.slice(j, j + 50));
+              if (upErr) throw upErr;
+            }
+            var touchedIds = {};
+            touched.forEach(function(r){ touchedIds[r.id] = true; });
+            state.rows = state.rows.filter(function(r){ return !touchedIds[r.id]; }).concat(touched);
           }
-          state.rows = newRows;
-          logChange("import", { count: newRows.length });
+          logChange("import", { count: touched.length, mode: mode });
           closeModal(); render();
-          toast("S'han carregat " + newRows.length + " obres des de l'Excel.");
+          toast(mode === "replace"
+            ? "S'han carregat " + touched.length + " obres i s'ha substituït la llista."
+            : touched.length + " actuacions afegides o actualitzades. La resta no s'ha tocat.");
         } catch(e){
-          apply.disabled = false; apply.textContent = "Substitueix les obres";
+          apply.disabled = false; apply.textContent = applyLabel();
           toast("Error en aplicar l'Excel: " + (e.message || "desconegut"));
         }
       });
