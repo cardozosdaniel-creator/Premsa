@@ -1,0 +1,22 @@
+// Configuració de l'aplicació. Copia aquest fitxer a `config.js` i omple els
+// valors amb les credencials del teu projecte de Supabase.
+//
+// Es carrega abans que la resta del codi. Aquestes credencials són PÚBLIQUES
+// per definició (s'envien al navegador): la "anon key" no dóna accés admin.
+// L'accés real es controla amb la contrasenya compartida (dins de l'app) i
+// amb les regles RLS al costat servidor.
+
+window.APP_CONFIG = {
+  // URL del projecte de Supabase. La trobes a:
+  // Supabase Dashboard → Settings → API → Project URL
+  supabaseUrl: "https://XXXX.supabase.co",
+
+  // Clau anònima ("anon public"). Al mateix panell, sota "Project API keys".
+  supabaseAnonKey: "eyJ...",
+
+  // Correus dels admins (poden canviar la contrasenya). Cada usuari admin
+  // introdueix aquest mateix correu al signar-se dins de l'app.
+  adminEmails: [
+    "admin@exemple.cat"
+  ]
+};

@@ -6,3 +6,11 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# Credencials de Supabase de l'app de pla d'obres. Aquest repositori és
+# públic: el config.js real mai s'ha de committejar. El genera build.mjs a
+# partir de les variables d'entorn de Vercel.
+pla-obres/config.js
+
+# Captures generades per les proves de pla-obres/
+pla-obres/*.png
