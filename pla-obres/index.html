@@ -1790,6 +1790,7 @@
       <button class="btn" data-act="print" title="Obre el diàleg d'impressió amb el dossier preparat">Dossier PDF</button>
       <details class="menu"><summary class="btn">Dades</summary>
         <div class="menu-pop">
+          <button class="mi" data-act="export-csv">Exporta a full de càlcul<small>Totes les columnes que llegeix l'importador, per revisar-ho de cop.</small></button>
           <button class="mi" data-act="excel-paste">Importa des d'Excel<small>Afegeix o actualitza en bloc des d'un full de càlcul.</small></button>
           <div class="mi-sep"></div>
           <div class="mi-head">Còpia de seguretat</div>
@@ -4194,6 +4195,44 @@ function saveBlob(filename, data, mime){
 
 function todayStamp(){ return new Date().toISOString().slice(0,10); }
 
+// Exporta el pla amb les mateixes columnes que llegeix l'importador, perquè
+// es pugui revisar tot de cop al full de càlcul i tornar-lo a carregar.
+// Punt i coma com a separador: és el que espera l'Excel en català i castellà,
+// i evita que els imports amb coma decimal parteixin les cel·les.
+function csvCell(v){
+  var s = String(v == null ? "" : v);
+  return /[";\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+function doExportCSV(){
+  var rows = visibleRows().slice().sort(sortRows);
+  var head = IMPORT_FIELDS.map(function(f){ return f.label; });
+  var lines = [head.map(csvCell).join(";")];
+  rows.forEach(function(r){
+    lines.push([
+      DEPTS[r.dept] || r.dept,
+      r.obra,
+      r.loc === "—" ? "" : r.loc,
+      r.imp === "—" ? "" : r.imp,
+      r.fita,
+      r.data,
+      r.encarregat ? ENCARREGATS[r.encarregat].label : "",
+      r.nivell,
+      r.comms
+    ].map(csvCell).join(";"));
+  });
+  // BOM al davant: sense això, l'Excel obre els accents trencats.
+  var csv = "﻿" + lines.join("\r\n") + "\r\n";
+  var name = "pla-obres-" + todayStamp() + ".csv";
+  if (saveBlob(name, csv, "text/csv;charset=utf-8")){
+    var quantes = rows.length === state.rows.length
+      ? rows.length + " actuacions"
+      : rows.length + " actuacions (les que tens filtrades ara)";
+    toast("Exportades " + quantes + ". Obre'l amb Excel, revisa'l i torna'l a enganxar aquí.");
+  } else {
+    toast("No s'ha pogut generar el fitxer.");
+  }
+}
+
 function doDownload(){
   var html = buildStandalone();
   if (!html){ toast("No s'ha pogut generar l'informe."); return; }
@@ -4465,6 +4504,8 @@ document.addEventListener("click", function(e){
     }
   } else if (act === "add-month"){
     addRowInMonth(t.dataset.month);
+  } else if (act === "export-csv"){
+    doExportCSV();
   } else if (act === "dw-impacte"){
     showImpacteCalc();
   } else if (act === "tpl-add" || act === "tpl-add-fase"){
@@ -4759,7 +4800,8 @@ var ENC_ALIASES = {
 // Parseja text tabular. Detecta si és tab-separated (Excel copy-paste) o
 // coma-separated (CSV descarregat). No fem servir cap llibreria: implementació
 // mínima però correcta per CSV amb cometes.
-function parseCSVLine(line){
+function parseCSVLine(line, delim){
+  delim = delim || ",";
   var out = [], cur = "", inQ = false;
   for (var i = 0; i < line.length; i++){
     var c = line[i];
@@ -4769,12 +4811,27 @@ function parseCSVLine(line){
       else cur += c;
     } else {
       if (c === '"'){ inQ = true; }
-      else if (c === ","){ out.push(cur); cur = ""; }
+      else if (c === delim){ out.push(cur); cur = ""; }
       else cur += c;
     }
   }
   out.push(cur);
   return out;
+}
+
+// Quin separador fa servir el text enganxat. L'Excel en català i castellà
+// desa amb punt i coma; copiar cel·les dona tabuladors; els CSV anglosaxons,
+// comes. Comptem fora de cometes i guanya el que aparegui més.
+function detectDelimiter(line){
+  var counts = { "\t":0, ";":0, ",":0 }, inQ = false;
+  for (var i = 0; i < line.length; i++){
+    var c = line[i];
+    if (c === '"') inQ = !inQ;
+    else if (!inQ && counts[c] !== undefined) counts[c]++;
+  }
+  if (counts["\t"] > 0) return "\t";
+  if (counts[";"] >= counts[","]) return counts[";"] > 0 ? ";" : ",";
+  return ",";
 }
 // Camps que sabem llegir, en l'ordre en què els esperem per defecte.
 var IMPORT_FIELDS = [
@@ -4785,7 +4842,8 @@ var IMPORT_FIELDS = [
   { key:"fita",       label:"Fita" },
   { key:"data",       label:"Data" },
   { key:"encarregat", label:"Encarregat" },
-  { key:"nivell",     label:"Nivell" }
+  { key:"nivell",     label:"Nivell" },
+  { key:"comms",      label:"Accions de comunicació" }
 ];
 
 // Endevina a quina columna va cada camp llegint la capçalera. Si no n'hi ha,
@@ -4803,7 +4861,8 @@ function guessColumnMap(rows){
     fita:       ["fita","estat","situacio","situació"],
     data:       ["data","calendari","previsio","previsió","termini"],
     encarregat: ["encarregat","responsable","qui"],
-    nivell:     ["nivell","nivel"]
+    nivell:     ["nivell","nivel"],
+    comms:      ["accions de comunicacio","accions","comunicacio","pla de comunicacio","comentaris"]
   };
   var found = {};
   head.forEach(function(cell, idx){
@@ -4820,9 +4879,13 @@ function guessColumnMap(rows){
 }
 
 function splitPastedRows(text){
-  var lines = String(text).split(/\r?\n/).filter(function(l){ return l.trim(); });
-  var isTab = lines[0] && lines[0].indexOf("\t") >= 0;
-  return lines.map(function(l){ return isTab ? l.split("\t") : parseCSVLine(l); });
+  // Fora el BOM que hi posa l'Excel: si no, la primera capçalera no es
+  // reconeix i la fila de títols acaba comptant com una actuació.
+  var lines = String(text).replace(/^\uFEFF/, "").split(/\r?\n/)
+    .filter(function(l){ return l.trim(); });
+  if (!lines.length) return [];
+  var delim = detectDelimiter(lines[0]);
+  return lines.map(function(l){ return parseCSVLine(l, delim); });
 }
 
 function parseExcelPaste(text, colMap){
@@ -4848,7 +4911,8 @@ function parseExcelPaste(text, colMap){
       fita: cell(r, "fita").trim(),
       data: cell(r, "data").trim(),
       encarregat: ENC_ALIASES[cell(r, "encarregat").trim().toLowerCase()] || "",
-      nivell: nivell
+      nivell: nivell,
+      comms: cell(r, "comms").trim()
     };
   }).filter(function(r){ return r.obra; });
 }
@@ -5039,7 +5103,7 @@ function showExcelPaste(){
             fita: p.fita, data: p.data, bucket: guessBucket(p.data),
             encarregat: p.encarregat || (existing && existing.encarregat) || "",
             nivell: p.nivell || (existing && existing.nivell) || "",
-            comms: (existing && existing.comms) || "",
+            comms: p.comms || (existing && existing.comms) || "",
             status: (existing && existing.status) || "todo",
             kind: (existing && existing.kind) || "",
             vegueria: (existing && existing.vegueria) || "",
