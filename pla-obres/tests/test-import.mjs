@@ -156,6 +156,45 @@ check('Ara sí esborra la taula', sb3.deletes === 1, 'deletes=' + sb3.deletes);
 check('I insereix només la fila de l\'Excel', sb3.inserts.length === 1, 'inserts=' + sb3.inserts.length);
 check('Queda 1 sola actuació', (await worksCount()) === 1, String(await worksCount()));
 
+// ═══ 6. ANADA I TORNADA: EXPORTAR I TORNAR A CARREGAR ═══
+// El full de càlcul ha de portar prou informació perquè, si el tornes a
+// enganxar sense tocar-hi res, el pla quedi exactament igual.
+await page.evaluate(() => { window.__csv = null;
+  const orig = window.saveBlob;
+  window.saveBlob = (name, data) => { window.__csv = data; return true; };
+});
+await page.click('details.menu > summary'); await page.waitForTimeout(150);
+await page.click('[data-act="export-csv"]'); await page.waitForTimeout(500);
+const csv = await page.evaluate(() => window.__csv);
+check("L'exportació genera un fitxer", !!csv && csv.length > 50, csv ? csv.length + ' bytes' : 'buit');
+const csvLines = (csv || '').replace(/^\uFEFF/, '').trim().split(/\r?\n/);
+check('Porta capçalera i una fila per actuació', csvLines.length === 2, String(csvLines.length));
+check('La capçalera té les 9 columnes', csvLines[0].split(';').length === 9, csvLines[0]);
+check("Inclou les accions de comunicació", /Accions de comunicació/.test(csvLines[0]));
+check('El departament surt amb nom, no amb sigla', /Cultura/.test(csv), csvLines[1]);
+
+// Tornem a enganxar-ho tal qual, en mode afegir.
+await openImport();
+await page.fill('#xls-input', csvLines.join('\n'));
+await page.waitForTimeout(400);
+const prevRt = await page.locator('#xls-preview').innerText();
+check('En reimportar-ho no detecta res de nou', /^0/.test(prevRt.trim()), prevRt.replace(/\n/g,' | '));
+check('I tampoc res per esborrar', !/desapareixen/i.test(prevRt));
+await page.click('#xls-apply'); await page.waitForTimeout(700);
+check('El pla es queda igual', (await worksCount()) === 1, String(await worksCount()));
+
+// I si al full hi escrivim accions, han d'entrar.
+await openImport();
+await page.fill('#xls-input',
+  csvLines[0] + '\n' +
+  'Cultura;Biblioteca de Reus;Reus;3,5 M€;Inici obres;Setembre 2026;Delegació;2;Bustiada i cartelleria');
+await page.waitForTimeout(400);
+await page.click('#xls-apply'); await page.waitForTimeout(700);
+const sbRt = await page.evaluate(() => window.__sb);
+const reus = sbRt.upserts[sbRt.upserts.length - 1];
+check("Les accions escrites al full arriben a l'app",
+  reus && reus.comms === 'Bustiada i cartelleria', reus ? reus.comms : 'no trobada');
+
 console.log(R.join('\n'));
 console.log('\nErrors: ' + (errors.length ? '\n' + errors.join('\n') : 'cap'));
 console.log('Fallades: ' + R.filter(r => r.startsWith('FAIL')).length);

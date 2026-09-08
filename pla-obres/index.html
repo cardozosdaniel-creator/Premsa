@@ -301,6 +301,11 @@
   .lvl-help[open] > summary{ color:var(--ink); }
   .lvl-help-body{ padding:8px 8px 4px; font-size:11.5px; line-height:1.5; color:var(--ink-2); }
   .lvl-intro{ margin:0 0 10px; padding-bottom:9px; border-bottom:1px solid var(--line); }
+  .lvl-note{
+    margin:9px 0 0; font-size:11px; color:var(--ink-3); line-height:1.55;
+    padding-top:8px; border-top:1px solid var(--line);
+  }
+  .lvl-note b{ color:var(--ink-2); }
   .lvl-row{ display:flex; gap:8px; margin-bottom:10px; align-items:flex-start; }
   .lvl-row:last-child{ margin-bottom:0; }
   .lvl-row b{ color:var(--ink); font-weight:600; }
@@ -1228,6 +1233,31 @@
   .dw-tpl-hint{
     margin-top:10px; font-size:11.5px; color:var(--ink-3); line-height:1.5;
   }
+  /* Cada fase de l'obra és un bloc plegable: el Nivell 3 té 38 accions i
+     totes obertes alhora farien la fitxa inabastable. */
+  .tpl-fase{ border-top:1px solid var(--line); }
+  .tpl-fase:first-of-type{ border-top:0; }
+  .tpl-fase > summary{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:8px 6px; cursor:pointer; list-style:none;
+    font-size:12px; font-weight:600; color:var(--ink-2);
+  }
+  .tpl-fase > summary::-webkit-details-marker{ display:none; }
+  .tpl-fase > summary:hover{ color:var(--ink); }
+  .tpl-fase > summary::before{
+    content:"▸"; font-size:9px; color:var(--ink-3); margin-right:-4px;
+    transition:transform .12s ease;
+  }
+  .tpl-fase[open] > summary::before{ transform:rotate(90deg); }
+  .tpl-fase > summary > span:first-of-type{ flex:1 1 auto; }
+  .tpl-fase-n{
+    font-family:"IBM Plex Mono",monospace; font-size:10.5px; color:var(--ink-3); flex:none;
+  }
+  .dw-tpl-warn{
+    margin-top:11px; padding:9px 11px; border-radius:6px;
+    background:var(--warn-bg); border:1px solid var(--warn-line);
+    font-size:11.5px; color:var(--ink); line-height:1.5;
+  }
   .tpl-list{ display:flex; flex-direction:column; gap:2px; }
   .tpl-item{
     display:flex; align-items:flex-start; gap:8px; text-align:left;
@@ -1251,8 +1281,39 @@
   }
   .tpl-all:hover{ border-color:var(--ink-3); color:var(--ink); }
   .dw-suggest{
-    margin-top:9px; font-size:11.5px; color:var(--ink-2); line-height:1.5;
+    margin-top:10px; font-size:11.5px; color:var(--ink-2); line-height:1.55;
   }
+  .dw-suggest-note{ color:var(--ink-3); }
+
+  /* Calculadora d'impacte (secció 5 del protocol) */
+  .imp-list{ margin:14px 0 4px; border-top:1px solid var(--line); }
+  .imp-row{
+    display:flex; align-items:center; gap:14px; justify-content:space-between;
+    padding:7px 2px; border-bottom:1px solid var(--line); font-size:12.5px; color:var(--ink-2);
+  }
+  .imp-row > span{ flex:1 1 auto; min-width:0; }
+  .imp-scale{ display:inline-flex; flex:none; border:1px solid var(--line-2); border-radius:6px; overflow:hidden; }
+  .imp-v{
+    border:0; background:var(--surface); cursor:pointer; font:inherit;
+    font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--ink-3);
+    padding:4px 11px;
+  }
+  .imp-v + .imp-v{ border-left:1px solid var(--line-2); }
+  .imp-v:hover{ background:var(--surface-2); color:var(--ink); }
+  .imp-v[aria-pressed="true"]{ background:var(--ink); color:var(--paper); }
+  .imp-critica{
+    display:flex; align-items:flex-start; gap:9px; margin:14px 0 0;
+    font-size:12.5px; color:var(--ink-2); line-height:1.5; cursor:pointer;
+  }
+  .imp-result{
+    margin-top:14px; padding:13px 15px; border:1px solid var(--line);
+    border-radius:8px; background:var(--surface-2);
+  }
+  .imp-total{ font-size:12.5px; color:var(--ink-2); }
+  .imp-total b{ font-family:"IBM Plex Serif",serif; font-size:22px; color:var(--ink); }
+  .imp-lv{ font-size:15px; font-weight:650; margin-top:3px; }
+  .imp-lv.n1{ color:var(--n-1); } .imp-lv.n2{ color:var(--n-2); } .imp-lv.n3{ color:var(--n-3); }
+  .imp-scale-note{ font-size:11px; color:var(--ink-3); margin-top:5px; line-height:1.5; }
   .dw-suggest-go{
     border:none; background:none; padding:0; cursor:pointer;
     font:inherit; color:var(--accent); font-weight:650;
@@ -1666,19 +1727,21 @@
         <details class="lvl-help">
           <summary>Què vol dir cada nivell?</summary>
           <div class="lvl-help-body">
-            <p class="lvl-intro">El nivell el marca <b>el criteri més exigent</b> entre el volum d'inversió i l'impacte sobre la ciutadania. Una obra petita amb molta afectació és Nivell 3.</p>
+            <p class="lvl-intro">El nivell el marca <b>el criteri més exigent</b> entre el volum d'inversió i el grau d'impacte ciutadà. La inversió determina la rellevància institucional del projecte, però és <b>l'impacte</b> el que ha de determinar la intensitat del dispositiu de proximitat.</p>
             <div class="lvl-row"><span class="lvl-tag n1">N1</span><div>
-              <b>Bàsic</b><br>Impacte baix, afectació localitzada i durada curta.
-              <em>Cartell a peu d'obra, informació al web i avís als serveis implicats.</em>
+              <b>Comunicació bàsica</b><br>Baixa inversió i baix impacte: afectació molt localitzada, durada curta, sense talls de mobilitat ni afectació directa a habitatges, comerços o serveis.
+              <em>Cartell al punt d'actuació, informació al web, avís als serveis implicats, senyalització visible i canal per a incidències.</em>
             </div></div>
             <div class="lvl-row"><span class="lvl-tag n2">N2</span><div>
-              <b>Reforçat de proximitat</b><br>Afecta mobilitat, aparcament, comerços, escoles o equipaments.
-              <em>Bustiada, cartelleria als portals, reunió informativa, telèfon i correu de contacte, avís 15 dies abans.</em>
+              <b>Comunicació reforçada de proximitat</b><br>Impacte mitjà: alteració parcial de la mobilitat o dels accessos, supressió temporal d'aparcament, canvis de parades, afectació a comerços, escoles o equipaments, durada de setmanes o mesos.
+              <em>Pla específic de proximitat, bustiada, cartelleria als portals, reunió informativa, contacte propi, avís mínim de 15 dies i recordatori 48-72 h abans.</em>
             </div></div>
             <div class="lvl-row"><span class="lvl-tag n3">N3</span><div>
-              <b>Intensiu amb oficina d'informació</b><br>Grans obres o afectacions elevades i prolongades.
-              <em>Oficina física d'atenció, informadors de carrer, butlletí periòdic, web propi, sessions sectorials i acte de retorn.</em>
+              <b>Comunicació intensiva amb oficina d'informació</b><br>Impacte alt: talls de carrers o de línies de transport, canvis importants d'itineraris, restriccions prolongades, obres nocturnes o zones especialment sensibles. <b>També s'hi apliquen obres de baixa inversió amb afectació ciutadana molt elevada.</b>
+              <em>Pla integral, oficina física d'atenció, web propi, bustiada per fases, informadors de carrer, butlletí periòdic, sessions sectorials i acte de retorn.</em>
             </div></div>
+            <p class="lvl-note">Per objectivar-ho, la fitxa de cada actuació té una <b>calculadora d'impacte</b> amb els dotze factors del protocol. Una afectació crítica en mobilitat, accessibilitat, seguretat o serveis essencials comporta directament el nivell 3.</p>
+            <p class="lvl-note">Les obres de nivell 2 i 3 han de tenir una <b>persona responsable de comunicació</b> assignada.</p>
           </div>
         </details>
       </div>
@@ -1727,6 +1790,7 @@
       <button class="btn" data-act="print" title="Obre el diàleg d'impressió amb el dossier preparat">Dossier PDF</button>
       <details class="menu"><summary class="btn">Dades</summary>
         <div class="menu-pop">
+          <button class="mi" data-act="export-csv">Exporta a full de càlcul<small>Totes les columnes que llegeix l'importador, per revisar-ho de cop.</small></button>
           <button class="mi" data-act="excel-paste">Importa des d'Excel<small>Afegeix o actualitza en bloc des d'un full de càlcul.</small></button>
           <div class="mi-sep"></div>
           <div class="mi-head">Còpia de seguretat</div>
@@ -2127,46 +2191,166 @@ var STATUS_ORDER = ["todo","doing","done"];
 // el Nivell 2 fa tot el del Nivell 1 i hi afegeix el seu, i el 3 sobre el 2.
 // Serveixen de punt de partida editable, no de camisa de força: l'usuari les
 // esborra o n'afegeix segons l'obra.
+// ── Model de comunicació de proximitat: accions per nivell i per fase ──────
+// Transcrites del protocol «Model de comunicació de proximitat abans, durant
+// i després de les obres», secció 3. No són acumulatives: cada nivell porta
+// la seva llista sencera, tal com la defineix el document.
+var FASES = [
+  { key:"abans",   label:"Abans de l'obra" },
+  { key:"durant",  label:"Durant l'obra" },
+  { key:"despres", label:"Després de l'obra" }
+];
+
 var NIVELL_ACCIONS = {
-  "1": [
-    "Cartell informatiu a peu d'obra",
-    "Fitxa de l'actuació al web del departament",
-    "Avís als serveis municipals implicats"
-  ],
-  "2": [
-    "Bustiada als habitatges afectats",
-    "Cartelleria als portals i als comerços",
-    "Reunió informativa amb el veïnat",
-    "Telèfon i correu de contacte publicats",
-    "Avís amb 15 dies d'antelació abans de començar"
-  ],
-  "3": [
-    "Oficina física d'atenció a la ciutadania",
-    "Informadors de carrer durant l'obra",
-    "Butlletí periòdic d'avançament",
-    "Web propi de l'actuació",
-    "Sessions sectorials amb comerç, escoles i entitats",
-    "Acte públic de retorn en finalitzar"
-  ]
+  "1": {
+    abans: [
+      "Cartell informatiu al punt d'actuació",
+      "Informació al web o espai digital de seguiment d'obres",
+      "Avís als serveis municipals o territorials implicats",
+      "Comunicació directa a les finques immediatament afectades, quan sigui necessari",
+      "Identificació clara del promotor, l'objectiu, les dates i el canal de contacte"
+    ],
+    durant: [
+      "Senyalització visible",
+      "Actualització digital si hi ha canvis de calendari o afectacions no previstes",
+      "Canal de contacte per comunicar incidències",
+      "Resposta coordinada des dels serveis d'atenció ciutadana"
+    ],
+    despres: [
+      "Retirada ràpida de la senyalització provisional",
+      "Informació de finalització al web, quan sigui rellevant",
+      "Comprovació de la restitució dels accessos i de l'espai afectat"
+    ]
+  },
+  "2": {
+    abans: [
+      "Pla específic de comunicació de proximitat",
+      "Bustiada a residents, comerços i activitats afectades",
+      "Cartelleria informativa a portals, equipaments i punts de pas",
+      "Informació al web i als canals territorials",
+      "Comunicació a associacions veïnals, entitats, comerciants i serveis afectats",
+      "Reunió informativa o sessió telemàtica quan l'afectació sigui significativa",
+      "Informació sobre calendari, fases, accessos, mobilitat, aparcament, transport públic, residus, accessibilitat i alternatives",
+      "Telèfon, correu electrònic o formulari específic de contacte",
+      "Avís previ amb una antelació orientativa mínima de 15 dies",
+      "Recordatori entre 48 i 72 hores abans de les afectacions principals"
+    ],
+    durant: [
+      "Cartelleria actualitzada a peu d'obra",
+      "Informació diferenciada per fases",
+      "Actualitzacions periòdiques als canals digitals",
+      "Avisos immediats davant canvis rellevants",
+      "Coordinació amb serveis d'emergències, transport, escoles, comerços i equipaments",
+      "Persona o unitat responsable de la interlocució amb el territori",
+      "Registre de consultes, incidències i reclamacions",
+      "Informació directa als col·lectius especialment afectats",
+      "Reforç de la senyalització d'itineraris alternatius",
+      "Visites de seguiment a l'entorn de l'obra",
+      "Comunicació específica en cas de retards"
+    ],
+    despres: [
+      "Comunicació de finalització",
+      "Explicació de les millores incorporades",
+      "Bustiada o comunicació directa quan l'afectació hagi estat rellevant",
+      "Informació sobre l'obertura definitiva dels accessos",
+      "Recollida d'incidències pendents",
+      "Valoració de la comunicació realitzada i de les demandes ciutadanes"
+    ]
+  },
+  "3": {
+    abans: [
+      "Pla integral de comunicació aprovat abans de l'inici",
+      "Mapa detallat de públics afectats",
+      "Oficina física d'informació o punt estable d'atenció de proximitat",
+      "Telèfon i correu electrònic específics",
+      "Espai web propi amb calendari, plànols, fases, preguntes freqüents, itineraris i formulari d'incidències",
+      "Campanya de bustiada segmentada per zones",
+      "Sessions informatives generals i sectorials",
+      "Visites individualitzades als establiments més afectats",
+      "Reunions amb associacions veïnals i comercials",
+      "Informació als mitjans locals",
+      "Anuncis de servei públic quan l'abast ho justifiqui",
+      "Campanya específica de mobilitat i alternatives de transport",
+      "Material accessible i adaptat lingüísticament quan sigui necessari",
+      "Calendari anticipat d'avisos per cada fase",
+      "Protocol de comunicació de crisi i gestió de rumors o desinformació",
+      "Designació d'un responsable visible de comunicació de l'obra"
+    ],
+    durant: [
+      "Oficina d'informació activa durant tot el període d'afectació",
+      "Informadors de carrer en els moments de canvi de fase",
+      "Bustiada abans de cada afectació important",
+      "Butlletí periòdic, físic o digital",
+      "Avisos per correu electrònic, missatgeria o sistemes de subscripció",
+      "Informació actualitzada en temps real o amb periodicitat establerta",
+      "Reunions periòdiques amb veïnat, comerç i entitats",
+      "Senyalització reforçada i coherent en tot l'àmbit",
+      "Plànols d'accessos i itineraris alternatius",
+      "Informació específica per a vianants, bicicletes, vehicles, transport públic i mobilitat reduïda",
+      "Seguiment de l'impacte sobre el comerç i els serveis",
+      "Protocol per comunicar talls inesperats, retards, canvis de fase i afectacions extraordinàries",
+      "Coordinació diària o setmanal entre equip tècnic, constructora, comunicació i atenció ciutadana",
+      "Quadre de seguiment de consultes i temps de resposta",
+      "Presència regular de responsables institucionals i tècnics al territori"
+    ],
+    despres: [
+      "Campanya de comunicació de finalització i posada en servei",
+      "Jornada de portes obertes, visita ciutadana o acte de retorn",
+      "Explicació dels resultats, les millores, la inversió, els terminis i els beneficis",
+      "Comunicació directa a les persones i activitats afectades",
+      "Enquesta de satisfacció o procés d'avaluació",
+      "Informe de tancament amb accions, persones ateses, consultes i aprenentatges",
+      "Manteniment temporal del canal d'atenció per a incidències posteriors"
+    ]
+  }
 };
 
-// Llista acumulada per a un nivell.
+// Accions d'un nivell en una fase concreta.
+function accionsFase(n, fase){
+  var lv = NIVELL_ACCIONS[String(n)];
+  return (lv && lv[fase]) || [];
+}
+// Totes les accions d'un nivell, en ordre de fase.
 function accionsPerNivell(n){
   var out = [];
-  ["1","2","3"].forEach(function(k){
-    if (k <= String(n)) out = out.concat(NIVELL_ACCIONS[k] || []);
-  });
+  FASES.forEach(function(f){ out = out.concat(accionsFase(n, f.key)); });
   return out;
 }
 
-// El protocol diu que el nivell el marca el criteri més exigent entre inversió
-// i impacte. L'impacte no el sabem; la inversió sí, així que en proposem un i
-// deixem que la persona decideixi.
+// ── Sistema de puntuació de l'impacte (secció 5 del protocol) ──────────────
+// Dotze factors de 0 a 3. El resultat orienta el nivell; una afectació
+// crítica en mobilitat, accessibilitat, seguretat o serveis essencials porta
+// directament al nivell 3, tingui la puntuació que tingui.
+var IMPACTE_FACTORS = [
+  "Durada de l'obra",
+  "Nombre de persones afectades",
+  "Afectació a la mobilitat",
+  "Afectació al transport públic",
+  "Afectació als accessos a habitatges",
+  "Afectació als comerços i empreses",
+  "Afectació a escoles, centres sanitaris o equipaments",
+  "Soroll, pols o treballs nocturns",
+  "Complexitat de les fases",
+  "Risc de controvèrsia o conflictivitat",
+  "Existència de col·lectius vulnerables",
+  "Magnitud dels canvis permanents"
+];
+
+// Orientació pel volum d'inversió. El protocol parla d'inversió «baixa,
+// mitjana i alta» sense donar xifres: aquests llindars són nostres i només
+// serveixen d'indici. Qui mana és la puntuació d'impacte.
 function nivellSuggerit(row){
   var eur = parseEuros(row.imp);      // en euros, no en milions
   if (eur === null) return "";
   if (eur >= 20e6) return "3";
   if (eur >= 5e6)  return "2";
+  return "1";
+}
+
+function nivellPerPuntuacio(total, critica){
+  if (critica) return "3";
+  if (total > 20) return "3";
+  if (total >= 9) return "2";
   return "1";
 }
 
@@ -2590,32 +2774,182 @@ function commsHasAction(comms, action){
 // protocol prescriu per aquest nivell, i s'hi afegeix amb un clic. Segueix
 // sent text lliure — no hi ha estructura amagada — perquè el PDF, l'Excel i
 // les còpies de seguretat continuïn funcionant igual.
+// Calculadora d'impacte: els dotze factors de la secció 5 del protocol,
+// puntuats de 0 a 3. El total orienta el nivell, i una afectació crítica en
+// mobilitat, accessibilitat, seguretat o serveis essencials el porta al 3
+// tingui la puntuació que tingui.
+function showImpacteCalc(){
+  var row = byId(view.openId);
+  if (!row) return;
+  var scores = IMPACTE_FACTORS.map(function(){ return 0; });
+  var critica = false;
+
+  var factorRows = IMPACTE_FACTORS.map(function(f, i){
+    var opts = [0,1,2,3].map(function(v){
+      return '<button type="button" class="imp-v" data-i="' + i + '" data-v="' + v + '"' +
+        ' aria-pressed="' + (v === 0) + '">' + v + "</button>";
+    }).join("");
+    return '<div class="imp-row"><span>' + esc(f) + '</span><div class="imp-scale">' + opts + "</div></div>";
+  }).join("");
+
+  openModal(
+    '<h2 class="serif">Nivell segons l\'impacte</h2>' +
+    '<p class="sub">Puntua de <b>0</b> (cap afectació) a <b>3</b> (afectació molt alta). ' +
+    "És el sistema de la secció 5 del model de comunicació de proximitat.</p>" +
+    '<div class="imp-list">' + factorRows + "</div>" +
+    '<label class="imp-critica"><input type="checkbox" id="imp-critica"> ' +
+      "Afectació crítica en mobilitat, accessibilitat, seguretat o serveis essencials" +
+    "</label>" +
+    '<div class="imp-result" id="imp-result"></div>' +
+    '<div class="modal-actions">' +
+      '<button class="btn" data-close>Cancel·la</button>' +
+      '<button class="btn primary" id="imp-apply">Aplica el nivell</button>' +
+    "</div>",
+    function(card){
+      var out = card.querySelector("#imp-result");
+      var chk = card.querySelector("#imp-critica");
+      card.querySelector("[data-close]").addEventListener("click", closeModal);
+
+      var refresh = function(){
+        var total = scores.reduce(function(a, b){ return a + b; }, 0);
+        var n = nivellPerPuntuacio(total, critica);
+        out.innerHTML =
+          '<div class="imp-total"><b>' + total + "</b> punts sobre 36</div>" +
+          '<div class="imp-lv n' + n + '">Nivell ' + n + " · " + esc(NIVELLS[n].label.split("· ")[1] || "") + "</div>" +
+          '<div class="imp-scale-note">' +
+            (critica ? "L'afectació crítica porta directament al nivell 3."
+                     : "Fins a 8 punts, nivell 1. De 9 a 20, nivell 2. Més de 20, nivell 3.") +
+          "</div>";
+        out.dataset.n = n;
+        out.dataset.total = total;
+      };
+
+      card.querySelectorAll(".imp-v").forEach(function(b){
+        b.addEventListener("click", function(){
+          var i = parseInt(b.dataset.i, 10);
+          scores[i] = parseInt(b.dataset.v, 10);
+          card.querySelectorAll('.imp-v[data-i="' + i + '"]').forEach(function(x){
+            x.setAttribute("aria-pressed", String(x === b));
+          });
+          refresh();
+        });
+      });
+      chk.addEventListener("change", function(){ critica = chk.checked; refresh(); });
+
+      card.querySelector("#imp-apply").addEventListener("click", function(){
+        var n = out.dataset.n;
+        var r = byId(view.openId);
+        if (!r) { closeModal(); return; }
+        var before = r.nivell;
+        r.nivell = n;
+        upsertRowRemote(r);
+        logChange("edit", { rowId:r.id, rowLabel:rowLabelOf(r), field:"nivell",
+                            from: before ? "Nivell " + before : "Sense nivell",
+                            to: "Nivell " + n + " (impacte " + out.dataset.total + "/36" +
+                                (critica ? ", afectació crítica" : "") + ")" });
+        save(true);
+        closeModal();
+        render();
+        toast("Nivell " + n + " aplicat a partir de la puntuació d'impacte.");
+      });
+
+      refresh();
+    }
+  );
+}
+
+// Escriu una acció al pla sota la capçalera de la seva fase, creant-la si cal.
+// Així el text del pla queda ordenat com el protocol: abans, durant, després.
+function insertAction(text, nivell, action){
+  var fase = null;
+  FASES.forEach(function(f){
+    if (accionsFase(nivell, f.key).indexOf(action) >= 0) fase = f;
+  });
+  var line = "· " + action;
+  if (!fase) return (text ? text.replace(/\s+$/, "") + "\n" : "") + line;
+
+  var head = fase.label.toUpperCase();
+  var lines = text ? text.replace(/\s+$/, "").split("\n") : [];
+  var at = -1;
+  for (var i = 0; i < lines.length; i++){
+    if (lines[i].trim().toUpperCase() === head){ at = i; break; }
+  }
+  if (at < 0){
+    // La fase encara no hi és: la posem al lloc que li toca per ordre.
+    var order = FASES.map(function(f){ return f.label.toUpperCase(); });
+    var mine = order.indexOf(head);
+    var insertAt = lines.length;
+    for (var j = 0; j < lines.length; j++){
+      var k = order.indexOf(lines[j].trim().toUpperCase());
+      if (k >= 0 && k > mine){ insertAt = j; break; }
+    }
+    var block = (insertAt > 0 && lines[insertAt - 1] !== "" ? [""] : []).concat([head, line]);
+    lines.splice.apply(lines, [insertAt, 0].concat(block));
+    return lines.join("\n");
+  }
+  // Ja hi ha la capçalera: afegim al final del seu bloc.
+  var end = lines.length;
+  for (var m = at + 1; m < lines.length; m++){
+    if (order2Has(lines[m])){ end = m; break; }
+  }
+  lines.splice(end, 0, line);
+  return lines.join("\n").replace(/\n{3,}/g, "\n\n");
+}
+function order2Has(line){
+  var up = String(line).trim().toUpperCase();
+  return FASES.some(function(f){ return f.label.toUpperCase() === up; });
+}
+
 function checklistHTML(row){
   if (!row.nivell) {
-    return '<div class="dw-tpl-hint">Tria un nivell de comunicació i aquí sortiran les accions que li corresponen.</div>';
+    return '<div class="dw-tpl-hint">Tria un nivell i aquí sortiran les accions que el protocol ' +
+      "li assigna, separades per abans, durant i després de l'obra.</div>";
   }
-  var actions = accionsPerNivell(row.nivell);
-  if (!actions.length) return "";
-  var done = 0;
-  var items = actions.map(function(a, i){
-    var on = commsHasAction(row.comms, a);
-    if (on) done++;
-    return '<button type="button" class="tpl-item' + (on ? " on" : "") + '"' +
-      ' data-act="tpl-add" data-i="' + i + '"' + (on ? ' disabled' : '') +
-      ' title="' + (on ? "Ja consta al pla" : "Afegeix-ho al pla") + '">' +
-      '<span class="tpl-box" aria-hidden="true">' + (on ? "✓" : "+") + '</span>' +
-      '<span>' + esc(a) + '</span></button>';
+  var total = 0, done = 0;
+  // Una fase per bloc plegable. El Nivell 3 en té 38 en total: totes obertes
+  // alhora convertirien la fitxa en un llistat inabastable.
+  var blocks = FASES.map(function(f){
+    var acts = accionsFase(row.nivell, f.key);
+    if (!acts.length) return "";
+    var fdone = 0;
+    var items = acts.map(function(a){
+      var on = commsHasAction(row.comms, a);
+      if (on) fdone++;
+      return '<button type="button" class="tpl-item' + (on ? " on" : "") + '"' +
+        ' data-act="tpl-add" data-fase="' + f.key + '" data-a="' + esc(a) + '"' +
+        (on ? " disabled" : "") +
+        ' title="' + (on ? "Ja consta al pla" : "Afegeix-ho al pla") + '">' +
+        '<span class="tpl-box" aria-hidden="true">' + (on ? "✓" : "+") + "</span>" +
+        "<span>" + esc(a) + "</span></button>";
+    }).join("");
+    total += acts.length; done += fdone;
+    // Obrim la primera fase que encara tingui feina pendent.
+    var open = fdone < acts.length && !view.tplOpened;
+    if (open) view.tplOpened = true;
+    return '<details class="tpl-fase"' + (open ? " open" : "") + ">" +
+      "<summary><span>" + esc(f.label) + "</span>" +
+        '<span class="tpl-fase-n">' + fdone + "/" + acts.length + "</span></summary>" +
+      '<div class="tpl-list">' + items + "</div>" +
+      (fdone < acts.length
+        ? '<button type="button" class="tpl-all" data-act="tpl-add-fase" data-fase="' + f.key + '">' +
+          "Afegeix tota la fase</button>"
+        : "") +
+    "</details>";
   }).join("");
+  view.tplOpened = false;
+  if (!total) return "";
   return '<div class="dw-tpl">' +
     '<div class="dw-tpl-head">' +
       "<span>Accions del Nivell " + esc(row.nivell) + "</span>" +
-      '<span class="dw-tpl-n">' + done + "/" + actions.length + "</span>" +
-    '</div>' +
-    '<div class="tpl-list">' + items + '</div>' +
-    (done < actions.length
-      ? '<button type="button" class="tpl-all" data-act="tpl-add-all">Afegeix-les totes</button>'
-      : '') +
-  '</div>';
+      '<span class="dw-tpl-n">' + done + "/" + total + "</span>" +
+    "</div>" +
+    blocks +
+    // El protocol demana un responsable de comunicació per als nivells 2 i 3.
+    (row.nivell !== "1" && !row.encarregat
+      ? '<div class="dw-tpl-warn">El protocol demana una persona responsable de ' +
+        "comunicació per a les obres de nivell " + esc(row.nivell) + ". Assigna-la a «Qui se n'encarrega».</div>"
+      : "") +
+  "</div>";
 }
 
 function renderDrawer(){
@@ -2705,10 +3039,16 @@ function renderDrawer(){
       '<div class="dw-section">' +
         '<span class="dw-label">Nivell de comunicació de proximitat</span>' +
         '<div class="dw-chips">' + nivellChips + '</div>' +
-        (suggerit && suggerit !== row.nivell
-          ? '<div class="dw-suggest">Per inversió, li correspondria el <b>Nivell ' + suggerit + '</b>. ' +
-            '<button type="button" class="dw-suggest-go" data-act="dw-nivell" data-key="' + suggerit + '">Aplica-ho</button></div>'
-          : '') +
+        // El protocol és explícit: la inversió marca la rellevància
+        // institucional, però és l'impacte ciutadà el que ha de determinar el
+        // nivell. Per això oferim la calculadora, no una xifra automàtica.
+        '<div class="dw-suggest">' +
+          '<button type="button" class="dw-suggest-go" data-act="dw-impacte">Calcula el nivell segons l\'impacte</button>' +
+          (suggerit
+            ? ' <span class="dw-suggest-note">Per volum d\'inversió seria un Nivell ' + suggerit +
+              ', però el nivell el marca el criteri més exigent dels dos.</span>'
+            : "") +
+        '</div>' +
         '<div style="margin-top:12px"><span class="dw-label">Qui se n\'encarrega</span>' +
           '<div class="dw-chips">' + encChips + '</div></div>' +
       '</div>' +
@@ -3855,6 +4195,44 @@ function saveBlob(filename, data, mime){
 
 function todayStamp(){ return new Date().toISOString().slice(0,10); }
 
+// Exporta el pla amb les mateixes columnes que llegeix l'importador, perquè
+// es pugui revisar tot de cop al full de càlcul i tornar-lo a carregar.
+// Punt i coma com a separador: és el que espera l'Excel en català i castellà,
+// i evita que els imports amb coma decimal parteixin les cel·les.
+function csvCell(v){
+  var s = String(v == null ? "" : v);
+  return /[";\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+function doExportCSV(){
+  var rows = visibleRows().slice().sort(sortRows);
+  var head = IMPORT_FIELDS.map(function(f){ return f.label; });
+  var lines = [head.map(csvCell).join(";")];
+  rows.forEach(function(r){
+    lines.push([
+      DEPTS[r.dept] || r.dept,
+      r.obra,
+      r.loc === "—" ? "" : r.loc,
+      r.imp === "—" ? "" : r.imp,
+      r.fita,
+      r.data,
+      r.encarregat ? ENCARREGATS[r.encarregat].label : "",
+      r.nivell,
+      r.comms
+    ].map(csvCell).join(";"));
+  });
+  // BOM al davant: sense això, l'Excel obre els accents trencats.
+  var csv = "﻿" + lines.join("\r\n") + "\r\n";
+  var name = "pla-obres-" + todayStamp() + ".csv";
+  if (saveBlob(name, csv, "text/csv;charset=utf-8")){
+    var quantes = rows.length === state.rows.length
+      ? rows.length + " actuacions"
+      : rows.length + " actuacions (les que tens filtrades ara)";
+    toast("Exportades " + quantes + ". Obre'l amb Excel, revisa'l i torna'l a enganxar aquí.");
+  } else {
+    toast("No s'ha pogut generar el fitxer.");
+  }
+}
+
 function doDownload(){
   var html = buildStandalone();
   if (!html){ toast("No s'ha pogut generar l'informe."); return; }
@@ -4126,19 +4504,26 @@ document.addEventListener("click", function(e){
     }
   } else if (act === "add-month"){
     addRowInMonth(t.dataset.month);
-  } else if (act === "tpl-add" || act === "tpl-add-all"){
+  } else if (act === "export-csv"){
+    doExportCSV();
+  } else if (act === "dw-impacte"){
+    showImpacteCalc();
+  } else if (act === "tpl-add" || act === "tpl-add-fase"){
     var tr = byId(view.openId);
     if (!tr || !tr.nivell) return;
-    var all = accionsPerNivell(tr.nivell);
-    var pick = act === "tpl-add" ? [all[parseInt(t.dataset.i, 10)]] : all;
+    var pick = act === "tpl-add"
+      ? [t.dataset.a]
+      : accionsFase(tr.nivell, t.dataset.fase);
     var before = tr.comms || "";
-    var lines = before.trim() ? before.replace(/\s+$/, "").split("\n") : [];
+    var text = before;
     var added = 0;
     pick.forEach(function(a){
-      if (a && !commsHasAction(lines.join("\n"), a)){ lines.push("· " + a); added++; }
+      if (!a || commsHasAction(text, a)) return;
+      text = insertAction(text, tr.nivell, a);
+      added++;
     });
     if (!added) return;
-    tr.comms = lines.join("\n");
+    tr.comms = text;
     upsertRowRemote(tr);
     logChange("edit", { rowId:tr.id, rowLabel:rowLabelOf(tr), field:"comms",
                         from:before, to:tr.comms });
@@ -4415,7 +4800,8 @@ var ENC_ALIASES = {
 // Parseja text tabular. Detecta si és tab-separated (Excel copy-paste) o
 // coma-separated (CSV descarregat). No fem servir cap llibreria: implementació
 // mínima però correcta per CSV amb cometes.
-function parseCSVLine(line){
+function parseCSVLine(line, delim){
+  delim = delim || ",";
   var out = [], cur = "", inQ = false;
   for (var i = 0; i < line.length; i++){
     var c = line[i];
@@ -4425,12 +4811,27 @@ function parseCSVLine(line){
       else cur += c;
     } else {
       if (c === '"'){ inQ = true; }
-      else if (c === ","){ out.push(cur); cur = ""; }
+      else if (c === delim){ out.push(cur); cur = ""; }
       else cur += c;
     }
   }
   out.push(cur);
   return out;
+}
+
+// Quin separador fa servir el text enganxat. L'Excel en català i castellà
+// desa amb punt i coma; copiar cel·les dona tabuladors; els CSV anglosaxons,
+// comes. Comptem fora de cometes i guanya el que aparegui més.
+function detectDelimiter(line){
+  var counts = { "\t":0, ";":0, ",":0 }, inQ = false;
+  for (var i = 0; i < line.length; i++){
+    var c = line[i];
+    if (c === '"') inQ = !inQ;
+    else if (!inQ && counts[c] !== undefined) counts[c]++;
+  }
+  if (counts["\t"] > 0) return "\t";
+  if (counts[";"] >= counts[","]) return counts[";"] > 0 ? ";" : ",";
+  return ",";
 }
 // Camps que sabem llegir, en l'ordre en què els esperem per defecte.
 var IMPORT_FIELDS = [
@@ -4441,7 +4842,8 @@ var IMPORT_FIELDS = [
   { key:"fita",       label:"Fita" },
   { key:"data",       label:"Data" },
   { key:"encarregat", label:"Encarregat" },
-  { key:"nivell",     label:"Nivell" }
+  { key:"nivell",     label:"Nivell" },
+  { key:"comms",      label:"Accions de comunicació" }
 ];
 
 // Endevina a quina columna va cada camp llegint la capçalera. Si no n'hi ha,
@@ -4459,7 +4861,8 @@ function guessColumnMap(rows){
     fita:       ["fita","estat","situacio","situació"],
     data:       ["data","calendari","previsio","previsió","termini"],
     encarregat: ["encarregat","responsable","qui"],
-    nivell:     ["nivell","nivel"]
+    nivell:     ["nivell","nivel"],
+    comms:      ["accions de comunicacio","accions","comunicacio","pla de comunicacio","comentaris"]
   };
   var found = {};
   head.forEach(function(cell, idx){
@@ -4476,9 +4879,53 @@ function guessColumnMap(rows){
 }
 
 function splitPastedRows(text){
-  var lines = String(text).split(/\r?\n/).filter(function(l){ return l.trim(); });
-  var isTab = lines[0] && lines[0].indexOf("\t") >= 0;
-  return lines.map(function(l){ return isTab ? l.split("\t") : parseCSVLine(l); });
+  // Fora el BOM que hi posa l'Excel: si no, la primera capçalera no es
+  // reconeix i la fila de títols acaba comptant com una actuació.
+  var lines = String(text).replace(/^\uFEFF/, "").split(/\r?\n/)
+    .filter(function(l){ return l.trim(); });
+  if (!lines.length) return [];
+  var delim = detectDelimiter(lines[0]);
+  return lines.map(function(l){ return parseCSVLine(l, delim); });
+}
+
+// Fa correspondre les files enganxades amb les actuacions que ja existeixen,
+// per poder-les actualitzar en comptes de duplicar-les. No n'hi ha prou amb
+// l'"obra": un mateix projecte sovint té diverses files, una per cada fita
+// («Nova seu DTG Lleida» n'arriba a tenir 4). Si hi dediquéssim un simple
+// mapa obra → fila, totes les fites d'un mateix projecte es fondrien en una
+// de sola i se sobreescriurien entre elles.
+//
+// Per això la coincidència és en dos passos:
+//  1. Obra + fita exactes (la fita no ha canviat): és el cas net.
+//  2. Si l'obra només té una fila existent, sense ambigüitat, hi lliguem
+//     encara que la fita hagi canviat (és una actualització d'aquella fita).
+// Quan una obra té diverses files i la fita tampoc coincideix amb cap, no
+// endevinem quina: la fila s'afegeix com a nova en comptes d'arriscar-nos a
+// sobreescriure la fita equivocada. Cada fila existent només es pot fer
+// servir una vegada per import, perquè dues files nord del full no es lliguin
+// totes dues a la mateixa fila existent.
+function matchExistingRows(parsed, existingRows){
+  var normKey = function(s){ return String(s || "").toLowerCase().trim(); };
+  var compoundKey = function(o, f){ return normKey(o) + "||" + normKey(f); };
+  var byCompound = {}, byObra = {};
+  existingRows.forEach(function(r){
+    var o = normKey(r.obra), ck = compoundKey(r.obra, r.fita);
+    (byCompound[ck] = byCompound[ck] || []).push(r);
+    (byObra[o] = byObra[o] || []).push(r);
+  });
+  var claimed = {};
+  var matches = parsed.map(function(){ return null; });
+
+  parsed.forEach(function(p, i){
+    var cands = (byCompound[compoundKey(p.obra, p.fita)] || []).filter(function(r){ return !claimed[r.id]; });
+    if (cands.length === 1){ matches[i] = cands[0]; claimed[cands[0].id] = true; }
+  });
+  parsed.forEach(function(p, i){
+    if (matches[i]) return;
+    var cands = (byObra[normKey(p.obra)] || []).filter(function(r){ return !claimed[r.id]; });
+    if (cands.length === 1){ matches[i] = cands[0]; claimed[cands[0].id] = true; }
+  });
+  return matches;
 }
 
 function parseExcelPaste(text, colMap){
@@ -4504,7 +4951,8 @@ function parseExcelPaste(text, colMap){
       fita: cell(r, "fita").trim(),
       data: cell(r, "data").trim(),
       encarregat: ENC_ALIASES[cell(r, "encarregat").trim().toLowerCase()] || "",
-      nivell: nivell
+      nivell: nivell,
+      comms: cell(r, "comms").trim()
     };
   }).filter(function(r){ return r.obra; });
 }
@@ -4628,16 +5076,16 @@ function showExcelPaste(){
         apply.textContent = applyLabel();
         if (!parsed.length){ preview.innerHTML = ""; apply.disabled = true; return; }
         // Compara amb les actuals: quantes són noves, quantes ja hi eren i
-        // quantes de les que hi ha ara no surten a l'Excel.
-        var byName = {};
-        state.rows.forEach(function(r){ byName[r.obra.toLowerCase().trim()] = r; });
+        // quantes de les que hi ha ara no surten a l'Excel. La coincidència
+        // és per obra+fita (vegeu matchExistingRows): un mateix projecte pot
+        // tenir varies files, una per fita.
+        var matches = matchExistingRows(parsed, state.rows);
         var newCount = 0, updCount = 0;
-        parsed.forEach(function(p){
-          if (byName[p.obra.toLowerCase().trim()]) updCount++; else newCount++;
+        var matchedIds = {};
+        matches.forEach(function(m){
+          if (m){ updCount++; matchedIds[m.id] = true; } else newCount++;
         });
-        var pastNames = {};
-        parsed.forEach(function(p){ pastNames[p.obra.toLowerCase().trim()] = true; });
-        var rest = state.rows.filter(function(r){ return !pastNames[r.obra.toLowerCase().trim()]; });
+        var rest = state.rows.filter(function(r){ return !matchedIds[r.id]; });
         var restCount = rest.length;
 
         // Files on no hem sabut identificar el departament: acabarien a
@@ -4680,22 +5128,21 @@ function showExcelPaste(){
       apply.addEventListener("click", async function(){
         if (!lastParsed || !lastParsed.length) return;
         apply.disabled = true; apply.textContent = "Aplicant…";
-        // Mapa per preservar, per coincidència de nom, tot allò que s'edita
-        // dins de l'app i que l'Excel no porta: comentaris, nivell, encarregat,
-        // estat, vegueria assignada a mà i marca de Top 10.
-        var byName = {};
-        state.rows.forEach(function(r){ byName[r.obra.toLowerCase().trim()] = r; });
+        // Coincidència per obra+fita, no per obra sola: vegeu matchExistingRows.
+        // Preserva tot allò que s'edita dins de l'app i que l'Excel no porta:
+        // comentaris, nivell, encarregat, estat, vegueria i marca de Top 10.
+        var matches = matchExistingRows(lastParsed, state.rows);
         var maxOrder = state.rows.reduce(function(m, r){ return Math.max(m, r.sort_order || 0); }, 0);
 
         var touched = lastParsed.map(function(p, i){
-          var existing = byName[p.obra.toLowerCase().trim()];
+          var existing = matches[i];
           return normalizeRow({
             id: existing ? existing.id : uid(),
             dept: p.dept, obra: p.obra, loc: p.loc, imp: p.imp,
             fita: p.fita, data: p.data, bucket: guessBucket(p.data),
             encarregat: p.encarregat || (existing && existing.encarregat) || "",
             nivell: p.nivell || (existing && existing.nivell) || "",
-            comms: (existing && existing.comms) || "",
+            comms: p.comms || (existing && existing.comms) || "",
             status: (existing && existing.status) || "todo",
             kind: (existing && existing.kind) || "",
             vegueria: (existing && existing.vegueria) || "",
