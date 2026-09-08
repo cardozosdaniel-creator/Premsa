@@ -4888,6 +4888,46 @@ function splitPastedRows(text){
   return lines.map(function(l){ return parseCSVLine(l, delim); });
 }
 
+// Fa correspondre les files enganxades amb les actuacions que ja existeixen,
+// per poder-les actualitzar en comptes de duplicar-les. No n'hi ha prou amb
+// l'"obra": un mateix projecte sovint té diverses files, una per cada fita
+// («Nova seu DTG Lleida» n'arriba a tenir 4). Si hi dediquéssim un simple
+// mapa obra → fila, totes les fites d'un mateix projecte es fondrien en una
+// de sola i se sobreescriurien entre elles.
+//
+// Per això la coincidència és en dos passos:
+//  1. Obra + fita exactes (la fita no ha canviat): és el cas net.
+//  2. Si l'obra només té una fila existent, sense ambigüitat, hi lliguem
+//     encara que la fita hagi canviat (és una actualització d'aquella fita).
+// Quan una obra té diverses files i la fita tampoc coincideix amb cap, no
+// endevinem quina: la fila s'afegeix com a nova en comptes d'arriscar-nos a
+// sobreescriure la fita equivocada. Cada fila existent només es pot fer
+// servir una vegada per import, perquè dues files nord del full no es lliguin
+// totes dues a la mateixa fila existent.
+function matchExistingRows(parsed, existingRows){
+  var normKey = function(s){ return String(s || "").toLowerCase().trim(); };
+  var compoundKey = function(o, f){ return normKey(o) + "||" + normKey(f); };
+  var byCompound = {}, byObra = {};
+  existingRows.forEach(function(r){
+    var o = normKey(r.obra), ck = compoundKey(r.obra, r.fita);
+    (byCompound[ck] = byCompound[ck] || []).push(r);
+    (byObra[o] = byObra[o] || []).push(r);
+  });
+  var claimed = {};
+  var matches = parsed.map(function(){ return null; });
+
+  parsed.forEach(function(p, i){
+    var cands = (byCompound[compoundKey(p.obra, p.fita)] || []).filter(function(r){ return !claimed[r.id]; });
+    if (cands.length === 1){ matches[i] = cands[0]; claimed[cands[0].id] = true; }
+  });
+  parsed.forEach(function(p, i){
+    if (matches[i]) return;
+    var cands = (byObra[normKey(p.obra)] || []).filter(function(r){ return !claimed[r.id]; });
+    if (cands.length === 1){ matches[i] = cands[0]; claimed[cands[0].id] = true; }
+  });
+  return matches;
+}
+
 function parseExcelPaste(text, colMap){
   var rows = splitPastedRows(text);
   var map = colMap || guessColumnMap(rows);
@@ -5036,16 +5076,16 @@ function showExcelPaste(){
         apply.textContent = applyLabel();
         if (!parsed.length){ preview.innerHTML = ""; apply.disabled = true; return; }
         // Compara amb les actuals: quantes són noves, quantes ja hi eren i
-        // quantes de les que hi ha ara no surten a l'Excel.
-        var byName = {};
-        state.rows.forEach(function(r){ byName[r.obra.toLowerCase().trim()] = r; });
+        // quantes de les que hi ha ara no surten a l'Excel. La coincidència
+        // és per obra+fita (vegeu matchExistingRows): un mateix projecte pot
+        // tenir varies files, una per fita.
+        var matches = matchExistingRows(parsed, state.rows);
         var newCount = 0, updCount = 0;
-        parsed.forEach(function(p){
-          if (byName[p.obra.toLowerCase().trim()]) updCount++; else newCount++;
+        var matchedIds = {};
+        matches.forEach(function(m){
+          if (m){ updCount++; matchedIds[m.id] = true; } else newCount++;
         });
-        var pastNames = {};
-        parsed.forEach(function(p){ pastNames[p.obra.toLowerCase().trim()] = true; });
-        var rest = state.rows.filter(function(r){ return !pastNames[r.obra.toLowerCase().trim()]; });
+        var rest = state.rows.filter(function(r){ return !matchedIds[r.id]; });
         var restCount = rest.length;
 
         // Files on no hem sabut identificar el departament: acabarien a
@@ -5088,15 +5128,14 @@ function showExcelPaste(){
       apply.addEventListener("click", async function(){
         if (!lastParsed || !lastParsed.length) return;
         apply.disabled = true; apply.textContent = "Aplicant…";
-        // Mapa per preservar, per coincidència de nom, tot allò que s'edita
-        // dins de l'app i que l'Excel no porta: comentaris, nivell, encarregat,
-        // estat, vegueria assignada a mà i marca de Top 10.
-        var byName = {};
-        state.rows.forEach(function(r){ byName[r.obra.toLowerCase().trim()] = r; });
+        // Coincidència per obra+fita, no per obra sola: vegeu matchExistingRows.
+        // Preserva tot allò que s'edita dins de l'app i que l'Excel no porta:
+        // comentaris, nivell, encarregat, estat, vegueria i marca de Top 10.
+        var matches = matchExistingRows(lastParsed, state.rows);
         var maxOrder = state.rows.reduce(function(m, r){ return Math.max(m, r.sort_order || 0); }, 0);
 
         var touched = lastParsed.map(function(p, i){
-          var existing = byName[p.obra.toLowerCase().trim()];
+          var existing = matches[i];
           return normalizeRow({
             id: existing ? existing.id : uid(),
             dept: p.dept, obra: p.obra, loc: p.loc, imp: p.imp,
